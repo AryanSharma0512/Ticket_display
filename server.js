@@ -100,6 +100,26 @@ app.post('/update-ticket-info', (req, res) => {
   });
 });
 
+// Route to revert ticket information to default
+app.get('/revert-ticket-info', (req, res) => {
+  // Read the content of Base ticket.html and write it to ticket.html
+  fs.readFile(__dirname + '/Base ticket.html', 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading file:', err);
+      return res.status(500).send('Error reading file');
+    }
+
+    // Write the content to ticket.html
+    fs.writeFile(__dirname + '/ticket.html', data, (err) => {
+      if (err) {
+        console.error('Error writing file:', err);
+        return res.status(500).send('Error writing file');
+      }
+      res.send('Ticket information reverted successfully!');
+    });
+  });
+});
+
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
