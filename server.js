@@ -1,11 +1,17 @@
 const express = require('express');
 const fs = require('fs');
 const bodyParser = require('body-parser');
+const multer = require('multer');
 
 const app = express();
 const port = 3000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
+
+const upload = multer({ dest: 'uploads/' });
+app.use(express.static('public'));
+const baseTicketHTML = fs.readFileSync(__dirname + '/Base ticket.html', 'utf8');
+
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/form.html');
@@ -18,7 +24,7 @@ function parseDepartureDate(dateString) {
   return date.toLocaleDateString('en-US', options);
 }
 
-app.post('/update-ticket-info', (req, res) => {
+app.post('/update-ticket-info', upload.single('barcode'), (req, res) => {
   const {
     tripId,
     numPassengers,
@@ -68,13 +74,13 @@ app.post('/update-ticket-info', (req, res) => {
     let passengerDetailsHtml = '';
     for (let i = 0; i < numPassengers; i++) {
       passengerDetailsHtml += `
-        <tr>
-          <td>${passengerNames[i]}</td>
-          <td>[Barcode for passenger ${i + 1}]</td>
-          <td>${airlinePNR}</td>
-          <td>${ticketNumbers[i]}</td>
-        </tr>
-      `;
+       <tr>
+         <td>${passengerNames[i]}</td>
+         <td><img src="${req.file.path}" alt="Barcode for passenger ${i + 1}" style="width: 100px;"></td>
+         <td>${airlinePNR}</td>
+         <td>${ticketNumbers[i]}</td>
+       </tr>
+     `;
     }
 
     // Find and replace the passenger details table content

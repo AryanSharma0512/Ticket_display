@@ -125,7 +125,7 @@
 <body>
   <div class="container">
     <h1>Update Ticket Information</h1>
-    <form action="/update-ticket-info" method="POST">
+    <form action="/update-ticket-info" method="POST" enctype="multipart/form-data">
       <label for="num-passengers">Number of Passengers:</label>
       <input type="number" id="num-passengers" name="numPassengers" min="1" required>
       
@@ -140,6 +140,9 @@
         </div>
       </div>
       
+      <label for="barcode">Barcode Image (PNG):</label>
+      <input type="file" id="barcode" name="barcode" accept="image/png" required>
+
       <label for="trip-id">Trip Id:</label>
       <input type="text" id="trip-id" name="tripId" required>
 
@@ -187,6 +190,8 @@
 
       <button type="submit">Submit</button>
     </form>
+
+  
 
     <form action="/revert-ticket-info" method="GET">
       <button type="submit">Reverse</button>
