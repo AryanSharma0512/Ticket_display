@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-IX8p2Yi+czE4M5I/nu0iXnVmKw3o1Wn5C5/O7RpY6RhRZgskl8Xq1t6S0FZt3VfjbzUDkl7qSG6YzlBlXq29OQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <title>Update Ticket Information</title>
   <style>
     body {
@@ -74,9 +75,52 @@
       font-weight: bold;
     }
 
-    button[type="submit"]:hover {
-      background: linear-gradient(135deg, #1BFFFF, #2E3192);
+    /* Style for the barcode uploading button */
+    input[type="file"]#barcode {
+      display: inline-block;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #2E3192, #1BFFFF);
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+      position: relative;
+      overflow: hidden;
+      outline: none; /* Remove default focus outline */
     }
+
+    /* Smooth color transition on hover */
+    input[type="file"]#barcode:hover {
+      background: linear-gradient(135deg, #1BFFFF, #2E3192);
+      transform: translateY(-2px) scale(1.05); /* Move button 2px up and scale slightly on hover */
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Add subtle shadow on hover */
+    }
+
+    /* Gradient color animation */
+    @keyframes rainbow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Rainbow effect on the barcode uploading button */
+    input[type="file"]#barcode::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #FF0018, #FFA52C, #FFFF41, #008018, #0000F9, #86007D);
+      border-radius: 50%;
+      z-index: -1;
+      animation: rainbow 3s linear infinite;
+      }
+
 
     /* Circles background */
     .shape {
@@ -120,6 +164,9 @@
         transform: translateX(400px) translateY(100px);
       }
     }
+     
+    
+    
   </style>
 </head>
 <body>

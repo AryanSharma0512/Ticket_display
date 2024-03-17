@@ -2,16 +2,19 @@ const express = require('express');
 const fs = require('fs');
 const bodyParser = require('body-parser');
 const multer = require('multer');
+const pdf = require('html-pdf');
+const path = require('path');
 
 const app = express();
 const port = 3000;
+const ipAddress = '172.20.10.2';
 
+app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const upload = multer({ dest: 'uploads/' });
 app.use(express.static('public'));
 const baseTicketHTML = fs.readFileSync(__dirname + '/Base ticket.html', 'utf8');
-
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/form.html');
@@ -97,14 +100,16 @@ app.post('/update-ticket-info', upload.single('barcode'), (req, res) => {
           console.error('Error writing file:', err);
           return res.status(500).send('Error writing file');
         }
-        res.send('Ticket information updated successfully!');
+        // Redirect to the ticket.html page after successful update
+        res.redirect('/ticket.html');
       });
     } else {
       console.error('Error: Passenger details table not found in HTML');
       return res.status(500).send('Error: Passenger details table not found in HTML');
     }
   });
-});
+}); 
+
 
 // Route to revert ticket information to default
 app.get('/revert-ticket-info', (req, res) => {
@@ -126,6 +131,6 @@ app.get('/revert-ticket-info', (req, res) => {
   });
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+app.listen(port, ipAddress, () => {
+  console.log(`Server is running on http://${ipAddress}:${port}`);
 });
