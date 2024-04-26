@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-IX8p2Yi+czE4M5I/nu0iXnVmKw3o1Wn5C5/O7RpY6RhRZgskl8Xq1t6S0FZt3VfjbzUDkl7qSG6YzlBlXq29OQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <title>Update Ticket Information</title>
   <style>
@@ -187,8 +188,10 @@
         </div>
       </div>
       
-      <label for="barcode">Barcode Image (PNG):</label>
-      <input type="file" id="barcode" name="barcode" accept="image/png" required>
+      
+      <div id="barcode-inputs">
+        <!-- Barcode input fields will be inserted here dynamically -->
+      </div>
 
       <label for="trip-id">Trip Id:</label>
       <input type="text" id="trip-id" name="tripId" required>
@@ -247,52 +250,67 @@
   </div>
   
 
-  <script>
-    const numPassengersInput = document.getElementById('num-passengers');
-    const passengerDetails = document.getElementById('passenger-details');
+   <script>
+     const numPassengersInput = document.getElementById('num-passengers');
+     const passengerDetails = document.getElementById('passenger-details');
+ 
+     // Function to generate passenger input fields
+     function generatePassengerFields(num) {
+       passengerDetails.innerHTML = ''; // Clear existing fields
 
-    // Function to generate passenger input fields
-    function generatePassengerFields(num) {
-      passengerDetails.innerHTML = ''; // Clear existing fields
+       for (let i = 1; i <= num; i++) {
+         const passengerSection = document.createElement('div');
+         passengerSection.classList.add('passenger-section');
 
-      for (let i = 1; i <= num; i++) {
-        const passengerSection = document.createElement('div');
-        passengerSection.classList.add('passenger-section');
-
-        const passengerNameLabel = document.createElement('label');
-        passengerNameLabel.textContent = `Passenger ${i} Name:`;
-        passengerSection.appendChild(passengerNameLabel);
-
-        const passengerNameInput = document.createElement('input');
-        passengerNameInput.type = 'text';
-        passengerNameInput.id = `passenger-name-${i}`;
-        passengerNameInput.name = `passengerNames[]`; // Use array notation for dynamic fields
-        passengerNameInput.required = true;
-        passengerSection.appendChild(passengerNameInput);
-
-        const ticketNumberLabel = document.createElement('label');
-        ticketNumberLabel.textContent = `Ticket Number for Passenger ${i}:`;
-        passengerSection.appendChild(ticketNumberLabel);
-
-        const ticketNumberInput = document.createElement('input');
-        ticketNumberInput.type = 'text';
-        ticketNumberInput.id = `ticket-number-${i}`;
-        ticketNumberInput.name = `ticketNumbers[]`; // Use array notation for dynamic fields
-        ticketNumberInput.required = true;
-        passengerSection.appendChild(ticketNumberInput);
-
-        passengerDetails.appendChild(passengerSection);
+         const passengerNameLabel = document.createElement('label');
+         passengerNameLabel.textContent = `Passenger ${i} Name:`;
+         passengerSection.appendChild(passengerNameLabel);
+ 
+         const passengerNameInput = document.createElement('input');
+         passengerNameInput.type = 'text';
+         passengerNameInput.name = `passengerNames[]`; // Use array notation for dynamic fields
+         passengerNameInput.required = true;
+         passengerSection.appendChild(passengerNameInput);
+ 
+         const ticketNumberLabel = document.createElement('label');
+         ticketNumberLabel.textContent = `Ticket Number for Passenger ${i}:`;
+         passengerSection.appendChild(ticketNumberLabel);
+ 
+         const ticketNumberInput = document.createElement('input');
+         ticketNumberInput.type = 'text';
+         ticketNumberInput.name = `ticketNumbers[]`; // Use array notation for dynamic fields
+         ticketNumberInput.required = true;
+         passengerSection.appendChild(ticketNumberInput);
+ 
+         const barcodeLabel = document.createElement('label');
+         barcodeLabel.textContent = `Barcode for Passenger ${i} (PNG):`;
+         passengerSection.appendChild(barcodeLabel);
+ 
+         const barcodeInput = document.createElement('input');
+         barcodeInput.type = 'file';
+         barcodeInput.id = `barcode${i}`; // Add an ID to each barcode input field
+         barcodeInput.name = `barcodes`; // Use array notation for dynamic fields
+         barcodeInput.className = 'barcode-upload-btn';
+         barcodeInput.accept = 'image/png';
+         barcodeInput.required = true;
+         passengerSection.appendChild(barcodeInput);
+ 
+         // Highlighted line should be placed here
+         // This line ensures that each barcode input field has a unique ID
+         // <input type="file" id="barcode" name="barcodes[]" accept="image/png" multiple required>
+ 
+         passengerDetails.appendChild(passengerSection);
+        }
       }
-    }
+ 
+     // Update passenger fields on numPassengers change
+     numPassengersInput.addEventListener('change', () => {
+         const numPassengers = parseInt(numPassengersInput.value);
+         generatePassengerFields(numPassengers);
+     });
 
-    // Update passenger fields on numPassengers change
-    numPassengersInput.addEventListener('change', () => {
-      const numPassengers = parseInt(numPassengersInput.value);
-      generatePassengerFields(numPassengers);
-    });
-
-    // Generate initial passenger fields (assuming at least one passenger)
-    generatePassengerFields(1);
-  </script>
+     // Generate initial passenger fields (assuming at least one passenger)
+     generatePassengerFields(1);
+ </script>
 </body>
 </html>

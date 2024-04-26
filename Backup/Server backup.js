@@ -1,24 +1,27 @@
 const express = require('express');
 const fs = require('fs');
 const bodyParser = require('body-parser');
-const multer = require('multer');
+const multer = require('multer'); // Corrected import statement for multer
 const pdf = require('html-pdf');
 const path = require('path');
 
 const app = express();
 const port = 3000;
-const ipAddress = '172.20.10.2';
+const ipAddress = '192.168.29.153';
 
 app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Corrected multer initialization
 const upload = multer({ dest: 'uploads/' });
+
 app.use(express.static('public'));
 const baseTicketHTML = fs.readFileSync(__dirname + '/Base ticket.html', 'utf8');
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/form.html');
 });
+
 
 // Function to format departure date (optional, modify as needed)
 function parseDepartureDate(dateString) {
@@ -27,7 +30,7 @@ function parseDepartureDate(dateString) {
   return date.toLocaleDateString('en-US', options);
 }
 
-app.post('/update-ticket-info', upload.single('barcode'), (req, res) => {
+app.post('/update-ticket-info', upload.array('barcodes'), (req, res) => { // Corrected multer usage
   const {
     tripId,
     numPassengers,
@@ -49,6 +52,8 @@ app.post('/update-ticket-info', upload.single('barcode'), (req, res) => {
     gstAirline,
     totalFare
   } = req.body;
+
+  const barcodes = req.files.map(file => file.path);
 
   fs.readFile(__dirname + '/ticket.html', 'utf8', (err, data) => {
     if (err) {
@@ -75,16 +80,16 @@ app.post('/update-ticket-info', upload.single('barcode'), (req, res) => {
 
     // Generate HTML for passenger details table
     let passengerDetailsHtml = '';
-    for (let i = 0; i < numPassengers; i++) {
-      passengerDetailsHtml += `
-       <tr>
-         <td>${passengerNames[i]}</td>
-         <td><img src="${req.file.path}" alt="Barcode for passenger ${i + 1}" style="width: 100px;"></td>
-         <td>${airlinePNR}</td>
-         <td>${ticketNumbers[i]}</td>
-       </tr>
-     `;
-    }
+     for (let i = 0; i < numPassengers; i++) {
+       passengerDetailsHtml += `
+         <tr>
+           <td>${passengerNames[i]}</td>
+           <td><img src="${barcodes[i]}" alt="Barcode for passenger ${i + 1}" style="width: 100px;"></td> <!-- Corrected line -->
+           <td>${airlinePNR}</td>
+           <td>${ticketNumbers[i]}</td>
+         </tr>
+       `;
+      }
 
     // Find and replace the passenger details table content
     const tableStartIndex = data.indexOf('<tbody id="passenger-details-placeholder">');

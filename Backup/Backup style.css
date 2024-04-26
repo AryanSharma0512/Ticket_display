@@ -212,13 +212,22 @@ h2 {
     margin-top: 5px; /* Add spacing between flight info and baggage info */
 }
 
-.barcode-section {
-    text-align: center;
-    padding-top: 20px;
+.barcode-upload-btn {
+    background: linear-gradient(to right, #6a11cb, #9b35cc); /* Gradient background */
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
 }
 
-.barcode {
-    /* Style your barcode representation here */
+.barcode-upload-btn:hover {
+    background: linear-gradient(to right, #9b35cc, #6a11cb); /* Gradient background on hover */
+}
+
+.barcode-upload-btn:focus {
+    outline: none;
 }
 
 footer.clearfix {
