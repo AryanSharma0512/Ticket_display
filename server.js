@@ -1,18 +1,18 @@
 const express = require('express');
 const fs = require('fs');
 const bodyParser = require('body-parser');
-const multer = require('multer'); // Corrected import statement for multer
+const multer = require('multer');
 const pdf = require('html-pdf');
 const path = require('path');
 
 const app = express();
 const port = 3000;
-const ipAddress = '192.168.29.153';
+const ipAddress = '10.44.0.242';
 
 app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Corrected multer initialization
+
 const upload = multer({ dest: 'uploads/' });
 
 app.use(express.static('public'));
@@ -23,14 +23,14 @@ app.get('/', (req, res) => {
 });
 
 
-// Function to format departure date (optional, modify as needed)
+
 function parseDepartureDate(dateString) {
   const date = new Date(dateString);
   const options = { weekday: 'short', year: 'numeric', month: 'long', day: 'numeric' };
   return date.toLocaleDateString('en-US', options);
 }
 
-app.post('/update-ticket-info', upload.array('barcodes'), (req, res) => { // Corrected multer usage
+app.post('/update-ticket-info', upload.array('barcodes'), (req, res) => { 
   const {
     tripId,
     numPassengers,
