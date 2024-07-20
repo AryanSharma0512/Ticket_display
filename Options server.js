@@ -55,7 +55,7 @@ app.post('/submit-options', (req, res) => {
         <p><strong>Date of Journey:</strong> ${formattedDate}</p>
         <div class="cities">
           <span class="from">From:</span><span class="city"> ${fromCities[i]}</span>
-          <img src="line.png" alt="line" class="line-icon"><img src="plane.png" alt="Plane" class="plane-icon"><img src="line.png" alt="line" class="line-icon">
+          <img src="elements/line.png" alt="line" class="line-icon"><img src="elements/plane.png" alt="Plane" class="plane-icon"><img src="elements/line.png" alt="line" class="line-icon">
           <span class="to">To: </span><span class="city">${toCities[i]}</span>
         </div>
         <p><span class="time">&emsp;&emsp;&ensp;${departureTimes[i]}</span>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;&emsp;&emsp;&emsp;<span class="ftime">${flightTimes[i]}</span>&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;<span class="time">${arrivalTimes[i]}</span></p>

@@ -74,11 +74,11 @@ main {
 }
 
 .from {
-  font-weight: bold;
+  font-weight: lighter;
   margin-right: 10px;
 }
 .to {
-  font-weight: bold;
+  font-weight: lighter;
   margin-right: 10px;
 }
 
