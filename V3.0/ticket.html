@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Ticket</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="clearfix">
+        <h1 class="ticket-heading">Ticket</h1>
+        <div class="trip-id">Trip ID: [Trip ID]</div>
+        <img src="elements/Logo.png" alt="Shree Dhanlaxmi Travels Logo" class="logo">
+    </header>
+    <main class="container">
+        <div class="ticket-wrapper">
+            <div class="ticket-wrapper">
+                <div class="trip-details">
+                    <p><span style="color:black;font-weight:bold;">[Origin City] - [Destination City]  <span style="font-size: 10px;">[Day, Departure Date]</span></p>
+                </div>
+                <div class="airline-details">
+                    <div class="airline-info">
+                        <p id="airline-name-placeholder">[Airline Name]</p>
+                        <p>Flight Number: <span id="flight-number-placeholder">[Flight Number]</span></p>
+                        <p class="baggage-info">Baggage (per Adult/Child) –Check-in: 23kg*2piece = 46kg , Cabin: 7kg</p>
+                    </div>
+                    <div class="flight-info">
+                        <p style="font-family: 'Garamond', serif; color: #888;">Departure: <span id="departure-airport-code-placeholder">[Departure Airport Code]</span> - [Departure Time]</p>
+                        <p style="font-family: 'Garamond', serif; color: #888;">Arrival: <span id="arrival-airport-code-placeholder">[Arrival Airport Code]</span> - [Arrival Time]</p>
+                    </div>
+                </div>
+
+                <div class="passenger-details">
+                    <h2>Passengers</h2>
+                    <table class="passenger-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Barcode</th>
+                                <th>Airline PNR</th>
+                                <th>Ticket Number</th>
+                            </tr>
+                        </thead>
+                        <tbody id="passenger-details-placeholder">
+                            <!-- Passenger details will be inserted here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="tip">
+                    <p class="tip-text">Tip: Remember to write your child's name and your hotel number on each card; also, include contact information for a trusted friend or relative. Provide a card to each child to carry with them throughout your absence.</p>
+                </div>
+
+                <div class="important-information">
+                    <h2 class="important-heading">Important Information</h2>
+                    <div class="important-tips">
+                        <p>About This Trip:</p>
+                        <ul>
+                            <li>Write your child's name and your hotel number on each card; include a close friend's or relative's contact information on the card. Give a card to each child which they will carry with them as long as you are away.</li>
+                            <li>Except for medical devices, electronic devices which are larger than a cell phone/smart phone cannot be carried in the cabin of the aircraft.</li>
+                            <li>Only cell phones of dimension Length: 16cm x Width: 9.3cm x Depth: 1.5cm are allowed in the cabin baggage. Please carry all other electronic equipment inside check-in baggage.</li>
+                            <li>Use your Trip ID for all communication with Shree Dhanlaxmi Travels about this booking.</li>
+                            <li>Please reach the airport 4 hours before the departure time. Check-in counters at the airport close 90 minutes before departure.</li>
+                            <li>Your carry-on baggage shouldn't weigh more than 7kgs.</li>
+                            <li>Carry photo identification, you will need it as proof of identity while checking-in.</li>
+                            <li>Kindly ensure that you have the relevant visa, immigration clearance and travel with a passport, with a validity of at least 6 months.</li>
+                            <li>For hassle-free processing, cancel/amend your tickets with Shree Dhanlaxmi Travels instead of doing so directly with Airline.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="fare-breakup">
+                    <h2>Fare Breakup</h2>
+                    <ul>
+                        <li>Base Fare: Rs. <span id="base-fare-placeholder">[Base Fare]</span></li>
+                        <li>Taxes and Fees: Rs. <span id="taxes-fees-placeholder">[Taxes and Fees]</span></li>
+                        <li>GST(Airline): Rs. <span id="gst-airline-placeholder">[GST(Airline)]</span></li>
+                        <li>Discounts And Cashbacks: Rs. <span id="discounts-cashbacks-placeholder">[Discounts And Cashbacks]</span></li>
+                        <li>Total Fare: Rs. <span id="total-fare-placeholder">[Total Fare]</span></li>
+                    </ul>
+                </div>
+                
+                <script>
+                    // Calculate total fare
+                    const baseFare = parseFloat(document.getElementById('base-fare-placeholder').innerText);
+                    const taxesFees = parseFloat(document.getElementById('taxes-fees-placeholder').innerText);
+                    const gstAirline = parseFloat(document.getElementById('gst-airline-placeholder').innerText);
+                    const discountsCashbacks = parseFloat(document.getElementById('discounts-cashbacks-placeholder').innerText);
+                
+                    const totalFare = baseFare + taxesFees + gstAirline - discountsCashbacks;
+                    document.getElementById('total-fare-placeholder').innerText = totalFare.toFixed(2);
+                </script>
+
+                <script>
+                    // Convert specified fields to uppercase
+                    const fieldsToConvert = [
+                        'airline-name-placeholder',
+                        'departure-airport-code-placeholder',
+                        'arrival-airport-code-placeholder',
+                        'airline-pnr-placeholder'
+                    ];
+                
+                    fieldsToConvert.forEach(fieldId => {
+                        const element = document.getElementById(fieldId);
+                        if (element) {
+                            element.textContent = element.textContent.toUpperCase();
+                        }
+                    });
+                </script>
+
+                <div class="barcode-section">
+                    <!-- Include barcode image or representation here -->
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer class="clearfix">
+        <p>&copy; Shree Dhanlaxmi Travels 2024</p>
+    </footer>
+</body>
+</html>

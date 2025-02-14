@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-IX8p2Yi+czE4M5I/nu0iXnVmKw3o1Wn5C5/O7RpY6RhRZgskl8Xq1t6S0FZt3VfjbzUDkl7qSG6YzlBlXq29OQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <title>Update Ticket Information</title>
+  <style>
+    body {
+      font-family: 'Roboto Mono', monospace;
+      background-color: #0A1931;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 600px;
+      padding: 40px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: auto; /* Enable overflow scrolling */
+      max-height: calc(100vh - 80px); /* Adjust height as needed */
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    form {
+      margin-top: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 18px;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 2px solid #1BFFFF;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 16px;
+      background-color: rgba(255, 255, 255, 0.8);
+      font-family: 'Roboto Mono', monospace;
+      font-weight: bold;
+    }
+
+    button[type="submit"] {
+      background: linear-gradient(135deg, #2E3192, #1BFFFF);
+      color: white;
+      padding: 14px 20px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+      transition: background 0.3s;
+      font-family: 'Roboto Mono', monospace;
+      font-weight: bold;
+    }
+
+    /* Style for the barcode uploading button */
+    input[type="file"]#barcode {
+      display: inline-block;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #2E3192, #1BFFFF);
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+      position: relative;
+      overflow: hidden;
+      outline: none; /* Remove default focus outline */
+    }
+
+    /* Smooth color transition on hover */
+    input[type="file"]#barcode:hover {
+      background: linear-gradient(135deg, #1BFFFF, #2E3192);
+      transform: translateY(-2px) scale(1.05); /* Move button 2px up and scale slightly on hover */
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Add subtle shadow on hover */
+    }
+
+    /* Gradient color animation */
+    @keyframes rainbow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Rainbow effect on the barcode uploading button */
+    input[type="file"]#barcode::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #FF0018, #FFA52C, #FFFF41, #008018, #0000F9, #86007D);
+      border-radius: 50%;
+      z-index: -1;
+      animation: rainbow 3s linear infinite;
+      }
+
+
+    /* Circles background */
+    .shape {
+      position: absolute;
+      opacity: 0.3;
+      pointer-events: none;
+      animation: move 20s linear infinite alternate;
+    }
+
+    .square {
+      background-color: #FFBA08;
+      width: 100px;
+      height: 100px;
+      top: 100px;
+      left: -50px;
+      animation-delay: 0s;
+    }
+
+    .circle {
+      background-color: #FF8C00;
+      width: 100px;
+      height: 100px;
+      top: -50px;
+      right: -50px;
+      border-radius: 50%;
+      animation-delay: 5s;
+    }
+
+    .ellipse {
+      background-color: #FF5733;
+      width: 150px;
+      height: 100px;
+      bottom: -100px;
+      left: -75px;
+      border-radius: 50%;
+      animation-delay: 10s;
+    }
+
+    @keyframes move {
+      to {
+        transform: translateX(400px) translateY(100px);
+      }
+    }
+     
+    
+    
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Update Ticket Information</h1>
+    <form action="/update-ticket-info" method="POST" enctype="multipart/form-data">
+      <label for="num-passengers">Number of Passengers:</label>
+      <input type="number" id="num-passengers" name="numPassengers" min="1" required>
+      
+      <div id="passenger-details">
+        <!-- Passenger details will be inserted here dynamically -->
+        <div class="passenger-section">
+          <label for="passenger-name-1">Passenger 1 Name:</label>
+          <input type="text" id="passenger-name-1" name="passengerNames[]" required>
+
+          <label for="ticket-number-1">Ticket Number for Passenger 1:</label>
+          <input type="text" id="ticket-number-1" name="ticketNumbers[]" required>
+        </div>
+      </div>
+      
+      
+      <div id="barcode-inputs">
+        <!-- Barcode input fields will be inserted here dynamically -->
+      </div>
+
+      <label for="trip-id">Trip Id:</label>
+      <input type="text" id="trip-id" name="tripId" required>
+
+      <label for="origin-city">Origin City:</label>
+      <input type="text" id="origin-city" name="originCity" required>
+
+      <label for="destination-city">Destination City:</label>
+      <input type="text" id="destination-city" name="destinationCity" required>
+
+      <label for="departure-date">Departure Date (YYYY-MM-DD):</label>
+      <input type="date" id="departure-date" name="departureDate" required>
+
+      <label for="airline-name">Airline Name:</label>
+      <input type="text" id="airline-name" name="airlineName" required>
+
+      <label for="flight-number">Flight Number:</label>
+      <input type="text" id="flight-number" name="flightNumber" required>
+
+      <label for="departure-airport-code">Departure Airport Code:</label>
+      <input type="text" id="departure-airport-code" name="departureAirportCode" required>
+
+      <label for="departure-time">Departure Time (HH:MM):</label>
+      <input type="text" id="departure-time" name="departureTime" required>
+
+      <label for="arrival-airport-code">Arrival Airport Code:</label>
+      <input type="text" id="arrival-airport-code" name="arrivalAirportCode" required>
+
+      <label for="arrival-time">Arrival Time (HH:MM):</label>
+      <input type="text" id="arrival-time" name="arrivalTime" required>
+
+      <label for="airline-pnr">Airline PNR:</label>
+      <input type="text" id="airline-pnr" name="airlinePNR" required>
+
+      <label for="base-fare">Base Fare:</label>
+      <input type="text" id="base-fare" name="baseFare" required>
+
+      <label for="discounts-cashbacks">Discounts And Cashbacks:</label>
+      <input type="text" id="discounts-cashbacks" name="discountsCashbacks" required>
+
+      <label for="taxes-fees">Taxes and Fees:</label>
+      <input type="text" id="taxes-fees" name="taxesFees" required>
+
+      <label for="gst-airline">GST(Airline):</label>
+      <input type="text" id="gst-airline" name="gstAirline" required>
+
+      <button type="submit">Submit</button>
+    </form>
+
+  
+
+    <form action="/revert-ticket-info" method="GET">
+      <button type="submit">Reverse</button>
+    </form>
+
+  </div>
+  
+
+   <script>
+     const numPassengersInput = document.getElementById('num-passengers');
+     const passengerDetails = document.getElementById('passenger-details');
+ 
+     // Function to generate passenger input fields
+     function generatePassengerFields(num) {
+       passengerDetails.innerHTML = ''; // Clear existing fields
+
+       for (let i = 1; i <= num; i++) {
+         const passengerSection = document.createElement('div');
+         passengerSection.classList.add('passenger-section');
+
+         const passengerNameLabel = document.createElement('label');
+         passengerNameLabel.textContent = `Passenger ${i} Name:`;
+         passengerSection.appendChild(passengerNameLabel);
+ 
+         const passengerNameInput = document.createElement('input');
+         passengerNameInput.type = 'text';
+         passengerNameInput.name = `passengerNames[]`; // Use array notation for dynamic fields
+         passengerNameInput.required = true;
+         passengerSection.appendChild(passengerNameInput);
+ 
+         const ticketNumberLabel = document.createElement('label');
+         ticketNumberLabel.textContent = `Ticket Number for Passenger ${i}:`;
+         passengerSection.appendChild(ticketNumberLabel);
+ 
+         const ticketNumberInput = document.createElement('input');
+         ticketNumberInput.type = 'text';
+         ticketNumberInput.name = `ticketNumbers[]`; // Use array notation for dynamic fields
+         ticketNumberInput.required = true;
+         passengerSection.appendChild(ticketNumberInput);
+ 
+         const barcodeLabel = document.createElement('label');
+         barcodeLabel.textContent = `Barcode for Passenger ${i} (PNG):`;
+         passengerSection.appendChild(barcodeLabel);
+ 
+         const barcodeInput = document.createElement('input');
+         barcodeInput.type = 'file';
+         barcodeInput.id = `barcode${i}`; // Add an ID to each barcode input field
+         barcodeInput.name = `barcodes`; // Use array notation for dynamic fields
+         barcodeInput.className = 'barcode-upload-btn';
+         barcodeInput.accept = 'image/png';
+         barcodeInput.required = true;
+         passengerSection.appendChild(barcodeInput);
+ 
+         // Highlighted line should be placed here
+         // This line ensures that each barcode input field has a unique ID
+         // <input type="file" id="barcode" name="barcodes[]" accept="image/png" multiple required>
+ 
+         passengerDetails.appendChild(passengerSection);
+        }
+      }
+ 
+     // Update passenger fields on numPassengers change
+     numPassengersInput.addEventListener('change', () => {
+         const numPassengers = parseInt(numPassengersInput.value);
+         generatePassengerFields(numPassengers);
+     });
+
+     // Generate initial passenger fields (assuming at least one passenger)
+     generatePassengerFields(1);
+ </script>
+</body>
+</html>
