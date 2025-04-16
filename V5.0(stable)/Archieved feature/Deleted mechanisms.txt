@@ -1,0 +1,64 @@
+I deleted this code, but I'm storing it as it might be used some other time, for some other purposes:
+
+
+function updateAggregates($conn) {
+    // Update general aggregates
+    $generalAggregates = [
+        "UPDATE Main_table SET net_total_collectable = (SELECT SUM(bill_amount) FROM Main_table)",
+        "UPDATE Main_table SET net_amount_received = (SELECT SUM(amount_received) FROM Main_table)",
+        "UPDATE Main_table SET total_collection_due = net_total_collectable - net_amount_received",
+        "UPDATE Main_table SET net_total_profit = (SELECT SUM(profit) FROM Main_table)",
+        "UPDATE Main_table SET net_margin = IF(net_total_collectable > 0, (net_total_profit / net_total_collectable) * 100, 0)"
+    ];
+
+    foreach ($generalAggregates as $query) {
+        if ($conn->query($query) === FALSE) {
+            echo "Error updating general aggregates: " . $conn->error;
+            return false;
+        }
+    }
+
+    // Update customer-specific aggregates
+    $customerSpecificAggregates = [
+        "UPDATE Main_table AS mt 
+            INNER JOIN (
+                SELECT customer_id, SUM(bill_amount) AS customer_total 
+                FROM Main_table GROUP BY customer_id
+            ) AS sub ON mt.customer_id = sub.customer_id 
+            SET mt.net_total_collectable_from_customer = sub.customer_total",
+
+        "UPDATE Main_table AS mt 
+            INNER JOIN (
+                SELECT customer_id, SUM(amount_received) AS customer_total 
+                FROM Main_table GROUP BY customer_id
+            ) AS sub ON mt.customer_id = sub.customer_id 
+            SET mt.net_amount_received_from_customer = sub.customer_total",
+
+        "UPDATE Main_table AS mt 
+            INNER JOIN (
+                SELECT customer_id, SUM(profit) AS customer_total 
+                FROM Main_table GROUP BY customer_id
+            ) AS sub ON mt.customer_id = sub.customer_id 
+            SET mt.net_total_profit_from_customer = sub.customer_total",
+
+        // Calculate net_total_collectable_due_from_customer
+        "UPDATE Main_table AS mt 
+            INNER JOIN (
+                SELECT customer_id, 
+                    SUM(bill_amount) AS net_total_collectable_from_customer, 
+                    SUM(amount_received) AS net_amount_received_from_customer 
+                FROM Main_table GROUP BY customer_id
+            ) AS sub ON mt.customer_id = sub.customer_id 
+            SET mt.net_total_collectable_due_from_customer = 
+                sub.net_total_collectable_from_customer - sub.net_amount_received_from_customer"
+    ];
+
+    foreach ($customerSpecificAggregates as $query) {
+        if ($conn->query($query) === FALSE) {
+            echo "Error updating customer-specific aggregates: " . $conn->error;
+            return false;
+        }
+    }
+
+    return true;
+}

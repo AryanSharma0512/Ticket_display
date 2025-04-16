@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="admin_style.css">
+  <link rel="stylesheet" href="Assests/Loading screen/loading.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script> <!-- Include Chart.js -->
+</head>
+<body>
+  <!-- Header Section -->
+  <header class="header">
+    <h1>Admin Panel</h1>
+    <p>Welcome to the Dhanlaxmi Travels Admin Dashboard</p>
+  </header>
+
+  <!-- Main Container -->
+  <div class="actions">
+    <!-- Action Grid (New Square Box Icons) -->
+    <div class="action-grid">
+      <div class="action-box" data-action="incomeStatement" onclick="handleActionFromGrid(this)">Income Statement</div>
+      <div class="action-box" data-action="paymentDue" onclick="handleActionFromGrid(this)">Outstanding Payments</div>
+      <div class="action-box" data-action="outstandingChart" onclick="handleActionFromGrid(this)">Outstanding by Customer</div>
+      <div class="action-box" data-action="monthlyRevenue" onclick="handleActionFromGrid(this)">Monthly Revenue Trends</div>
+      <div class="action-box" data-action="monthlyProfit" onclick="handleActionFromGrid(this)">Monthly Profit Trends</div>
+      <div class="action-box" data-action="revenueProfit" onclick="handleActionFromGrid(this)">Revenue & Profit Trends</div>
+      <div class="action-box" data-action="revenueProfitProjection" onclick="handleActionFromGrid(this)">Revenue & Profit Projection</div>
+      <div class="action-box" data-action="customerRevenue" onclick="handleActionFromGrid(this)">Customer Contribution</div>
+      <div class="action-box" data-action="yearToDate" onclick="handleActionFromGrid(this)">Year-to-Date Performance</div>
+      <div class="action-box" data-action="universalAggregates" onclick="handleActionFromGrid(this)">Universal Aggregated Fields</div>
+      <div class="action-box" data-action="backendAmountDues" onclick="handleActionFromGrid(this)">Back End Amount Dues</div>
+      <div class="action-box" data-action="transactionIDTracker" onclick="handleActionFromGrid(this)">Transaction ID Tracker</div>
+      <div class="action-box" data-action="eventIDTracker" onclick="handleActionFromGrid(this)">Event ID Tracker</div>
+      <div class="action-box" data-action="threadedTransactions" onclick="handleActionFromGrid(this)">Threaded Transactions</div>
+      <div class="action-box" data-action="lastTenTransactions" onclick="handleActionFromGrid(this)">Last 10 Transactions</div>
+      <div class="action-box" data-action="customerStatement" onclick="handleActionFromGrid(this)">Customer Statement</div>
+      <div class="action-box" data-action="customerCreditScore" onclick="handleActionFromGrid(this)">Customer Credit Score</div>
+      <div class="action-box" data-action="goalSeeker" onclick="handleActionFromGrid(this)">Goal Seeker</div>
+    </div>
+  </div>
+
+  <!-- Export Buttons -->
+  <div id="exportContainer" class="export-container" style="display: none;">
+    <button id="exportPdf" class="button" onclick="exportPDF()">Export as PDF</button>
+    <button id="exportCsv" class="button" onclick="exportCSV()">Export as CSV</button>
+  </div>
+
+  <div id="transactionTracker" style="display: none;">
+    <form onsubmit="trackTransaction(); return false;">
+      <label for="transactionID">Enter Transaction ID:</label>
+      <input type="text" id="transactionID" name="transactionID" required>
+      <button type="submit">Track Transaction</button>
+    </form>
+  </div>
+
+  <div id="eventTracker" style="display: none;">
+    <label for="eventID">Enter Event ID:</label>
+    <input type="text" id="eventID" name="eventID" required>
+    <button type="button" onclick="searchEventID()">Search Event</button>
+  </div>
+
+  <div id="threadedTransactionTracker" style="display: none;">
+    <label for="threadedTransactionID">Enter Transaction ID:</label>
+    <input type="text" id="threadedTransactionID" name="threadedTransactionID" required>
+    <button type="button" onclick="trackThreadedTransaction()">Search</button>
+  </div>
+
+  <div id="customerStatementContainer" style="display: none;">
+    <label for="customerID">Enter Customer ID:</label>
+    <input type="text" id="customerID" name="customerID" required>
+    <div>
+      <input type="hidden" id="unsettledOnlyHidden" name="unsettledOnly" value="0">
+      <input type="checkbox" id="unsettledOnly" name="unsettledOnly" onchange="updateUnsettledValue()">
+      <label for="unsettledOnly">View unsettled transactions only</label>
+    </div>
+    <button type="button" onclick="fetchCustomerStatement()">Generate Statement</button>
+    <button id="exportPdfCustomer" class="button" onclick="exportCustomerStatement()" style="display: none;">Export as PDF</button>
+  </div>
+
+  <div id="customerCreditContainer" style="display: none;">
+    <label for="creditCustomerID">Enter Customer ID:</label>
+    <input type="text" id="creditCustomerID" name="creditCustomerID" required>
+    <button type="button" onclick="fetchCustomerCreditScore()">Calculate Credit Score</button>
+    <div id="creditScoreOutput"></div>
+  </div>
+
+  <div id="goalSeekerSection" style="display: none; margin-top: 20px;">
+    <h2>Goal Seeker</h2>
+    <form id="goalSeekerForm">
+      <label for="netProfitInput">Net Profit Goal (INR):</label>
+      <input type="number" id="netProfitInput" name="netProfit" placeholder="Leave blank if not used">
+      <br><br>
+      <label for="netRevenueInput">Net Revenue Goal (INR):</label>
+      <input type="number" id="netRevenueInput" name="netRevenue" placeholder="Leave blank if not used">
+      <br><br>
+      <button type="submit">Calculate the future ✨</button>
+    </form>
+    <div id="goalSeekerOutput"></div>
+  </div>
+
+  <!-- Output Area (for text or messages) -->
+  <div id="outputContainer" class="centered">
+    Please select an action from the dropdown above.
+  </div>
+
+  <!-- Chart Container (fixed in the layout) -->
+  <div id="chartContainer" style="display: none; margin-top: 20px;">
+    <canvas id="chartCanvas"></canvas>
+  </div>
+
+  <!-- Footer Section -->
+  <footer class="footer">
+    <p>
+      &copy; 2025 Dhanlaxmi Travels Ltd.
+      <span class="tooltip">Designed in-house by <span>Aryan Sharma</span></span>
+    </p>
+  </footer>
+
+  <!-- JavaScript Section -->
+  <!-- The order here matters. We load chartClearManager.js first and then our page scripts. -->
+  <script src="chartClearManager.js" defer></script>
+  <script defer>
+    let currentAction = ''; // Store the current selected action
+    let activeChart = null; // Track the currently active Chart.js instance
+
+    // Handle dropdown actions
+    function handleAction() {
+      try {
+        clearChart();
+        if (window.activeRevenueProfitChart) window.activeRevenueProfitChart.destroy();
+        if (activeChart) activeChart.destroy();
+
+        // Get the selected action from the dropdown.
+        const action = document.getElementById("adminActions").value;
+
+        // Get container elements.
+        const outputContainer = document.getElementById("outputContainer");
+        const exportContainer = document.getElementById("exportContainer");
+        const chartContainer = document.getElementById("chartContainer");
+        const transactionTracker = document.getElementById("transactionTracker");
+        const eventTracker = document.getElementById("eventTracker");
+        const threadedTransactionTracker = document.getElementById("threadedTransactionTracker");
+        const customerStatementContainer = document.getElementById("customerStatementContainer");
+        const customerCreditContainer = document.getElementById("customerCreditContainer");
+        const goalSeekerSection = document.getElementById("goalSeekerSection");
+
+        // Clear the output text.
+        outputContainer.innerHTML = '';
+        // Hide all containers initially.
+        exportContainer.style.display = "none";
+        chartContainer.style.display = "none";
+        transactionTracker.style.display = "none";
+        eventTracker.style.display = "none";
+        threadedTransactionTracker.style.display = "none";
+        customerStatementContainer.style.display = "none";
+        customerCreditContainer.style.display = "none";
+        goalSeekerSection.style.display = "none";
+
+        // Remove any special class for sizing (for pie chart).
+        chartContainer.classList.remove("small-chart");
+
+        currentAction = action; // Update global currentAction.
+
+        switch (action) {
+          case "incomeStatement":
+            fetchIncomeStatement();
+            break;
+          case "paymentDue":
+            fetchOutstandingPayments();
+            break;
+          case "outstandingChart":
+            fetchAndRenderChart("fetch_outstanding_payments.php", "Outstanding Payments by Customer", "bar", "Customer Name", "Outstanding Amount (INR)");
+            break;
+          case "monthlyRevenue":
+            fetchAndRenderChart("fetch_monthly_revenue.php", "Monthly Revenue Trends", "line", "Month", "Revenue (INR)");
+            break;
+          case "monthlyProfit":
+            plotMonthlyProfitTrends();
+            break;
+          case "revenueProfit":
+            plotRevenueProfitTrends();
+            break;
+          case "revenueProfitProjection":
+            plotRevenueProfitTrendsProjection();
+            break;
+          case "customerRevenue":
+            // For the customer contribution pie chart, add the small-chart class.
+            chartContainer.classList.add("small-chart");
+            plotCustomerContributionPieChart();
+            break;
+          case "yearToDate":
+            fetchYearToDatePerformance();
+            break;
+          case "universalAggregates":
+            fetchUniversalAggregatedFields();
+            break;
+          case "backendAmountDues":
+            fetchBackendAmountDues();
+            break;
+          case "transactionIDTracker":
+            transactionTracker.style.display = "block";
+            outputContainer.innerHTML = 'Please enter a Transaction ID and press Track.';
+            break;
+          case "eventIDTracker":
+            eventTracker.style.display = "block";
+            break;
+          case "threadedTransactions":
+            threadedTransactionTracker.style.display = "block";
+            outputContainer.innerHTML = 'Please enter a Transaction ID to find related transactions.';
+            break;
+          case "lastTenTransactions":
+            fetchLastTenTransactions();
+            break;
+          case "customerStatement":
+            customerStatementContainer.style.display = "block";
+            break;
+          case "customerCreditScore":
+            customerCreditContainer.style.display = "block";
+            outputContainer.innerHTML = 'Please enter a Customer ID and press "Calculate Credit Score".';
+            break;
+          case "goalSeeker":
+            goalSeekerSection.style.display = "block";
+            outputContainer.innerHTML = "Enter your profit and revenue goals to see an approximate target date.";
+            break;
+          default:
+            outputContainer.innerHTML = 'Please select an action from the dropdown above.';
+        }
+      } catch (e) {
+        console.error("Error in handleAction:", e);
+      }
+    }
+
+    // Handle grid action clicks
+    function handleActionFromGrid(element) {
+      try {
+        clearChart();
+        const action = element.getAttribute("data-action");
+        currentAction = action;
+
+        const outputContainer = document.getElementById("outputContainer");
+        const exportContainer = document.getElementById("exportContainer");
+        const chartContainer = document.getElementById("chartContainer");
+        const transactionTracker = document.getElementById("transactionTracker");
+        const eventTracker = document.getElementById("eventTracker");
+        const threadedTransactionTracker = document.getElementById("threadedTransactionTracker");
+        const customerStatementContainer = document.getElementById("customerStatementContainer");
+        const customerCreditContainer = document.getElementById("customerCreditContainer");
+        const goalSeekerSection = document.getElementById("goalSeekerSection");
+
+        // Clear previous text output and hide containers.
+        outputContainer.innerHTML = '';
+        exportContainer.style.display = "none";
+        chartContainer.style.display = "none";
+        transactionTracker.style.display = "none";
+        eventTracker.style.display = "none";
+        threadedTransactionTracker.style.display = "none";
+        customerStatementContainer.style.display = "none";
+        customerCreditContainer.style.display = "none";
+        goalSeekerSection.style.display = "none";
+
+        // Remove any special sizing class.
+        chartContainer.classList.remove("small-chart");
+
+        switch (action) {
+          case "incomeStatement":
+            fetchIncomeStatement();
+            break;
+          case "paymentDue":
+            fetchOutstandingPayments();
+            break;
+          case "outstandingChart":
+            fetchAndRenderChart("fetch_outstanding_payments.php", "Outstanding Payments by Customer", "bar", "Customer Name", "Outstanding Amount (INR)");
+            break;
+          case "monthlyRevenue":
+            fetchAndRenderChart("fetch_monthly_revenue.php", "Monthly Revenue Trends", "line", "Month", "Revenue (INR)");
+            break;
+          case "monthlyProfit":
+            plotMonthlyProfitTrends();
+            break;
+          case "revenueProfit":
+            plotRevenueProfitTrends();
+            break;
+          case "revenueProfitProjection":
+            plotRevenueProfitTrendsProjection();
+            break;
+          case "customerRevenue":
+            // Apply the small-chart class for the pie chart.
+            chartContainer.classList.add("small-chart");
+            plotCustomerContributionPieChart();
+            break;
+          case "yearToDate":
+            fetchYearToDatePerformance();
+            break;
+          case "universalAggregates":
+            fetchUniversalAggregatedFields();
+            break;
+          case "backendAmountDues":
+            fetchBackendAmountDues();
+            break;
+          case "transactionIDTracker":
+            transactionTracker.style.display = "block";
+            outputContainer.innerHTML = 'Please enter a Transaction ID and press Track.';
+            break;
+          case "eventIDTracker":
+            eventTracker.style.display = "block";
+            break;
+          case "threadedTransactions":
+            threadedTransactionTracker.style.display = "block";
+            outputContainer.innerHTML = 'Please enter a Transaction ID to find related transactions.';
+            break;
+          case "lastTenTransactions":
+            fetchLastTenTransactions();
+            break;
+          case "customerStatement":
+            customerStatementContainer.style.display = "block";
+            break;
+          case "customerCreditScore":
+            customerCreditContainer.style.display = "block";
+            outputContainer.innerHTML = 'Please enter a Customer ID and press "Calculate Credit Score".';
+            break;
+          case "goalSeeker":
+            goalSeekerSection.style.display = "block";
+            outputContainer.innerHTML = "Enter your profit and revenue goals to see an approximate target date.";
+            break;
+          default:
+            outputContainer.innerHTML = 'Please select a valid action.';
+        }
+      } catch (e) {
+        console.error("Error in handleActionFromGrid:", e);
+      }
+    }
+
+    // Dynamically set PDF export link
+    function exportPDF() {
+      if (currentAction === "incomeStatement") {
+        window.location.href = "generate_income_statement_pdf.php";
+      } else if (currentAction === "paymentDue") {
+        window.location.href = "generate_outstanding_pdf.php";
+      } else if (currentAction === "outstandingChart") {
+        alert("PDF export for Outstanding Payments by Customer is not available yet.");
+      } else if (currentAction === "monthlyRevenue") {
+        window.location.href = "generate_monthly_revenue_pdf.php";
+      } else if (currentAction === "monthlyProfit") {
+        window.location.href = "generate_monthly_profit_pdf.php";
+      } else if (currentAction === "customerRevenue") {
+        window.location.href = "generate_customer_revenue_pdf.php";
+      } else if (currentAction === "yearToDate") {
+        window.location.href = "generate_year_to_date_pdf.php";
+      } else if (currentAction === "customerStatement") {
+        const customerID = document.getElementById('customerID').value;
+        if (!customerID) {
+          alert("Please enter a Customer ID to export the statement.");
+          return;
+        }
+        window.location.href = `export_customer_statement.php?customerID=${encodeURIComponent(customerID)}`;
+      } else {
+        alert("Please select a valid action to export.");
+      }
+    }
+
+    // Dynamically set CSV export link
+    function exportCSV() {
+      if (currentAction === "incomeStatement") {
+        window.location.href = "generate_income_statement_csv.php";
+      } else if (currentAction === "paymentDue") {
+        window.location.href = "generate_outstanding_csv.php";
+      } else if (currentAction === "outstandingChart") {
+        alert("CSV export for Outstanding Payments by Customer is not available yet.");
+      } else if (currentAction === "monthlyRevenue") {
+        window.location.href = "generate_monthly_revenue_csv.php";
+      } else if (currentAction === "customerRevenue") {
+        window.location.href = "generate_customer_revenue_csv.php";
+      } else if (currentAction === "yearToDate") {
+        window.location.href = "generate_year_to_date_csv.php";
+      } else {
+        alert("Please select a valid action to export.");
+      }
+    }
+
+    // Fetch and display Income Statement
+    function fetchIncomeStatement() {
+      const outputContainer = document.getElementById("outputContainer");
+      outputContainer.innerHTML = '<p>Loading Income Statement...</p>';
+
+      fetch("generate_income_statement.php")
+        .then(response => response.text())
+        .then(data => {
+          outputContainer.innerHTML = data;
+          document.getElementById("exportContainer").style.display = "block";
+        })
+        .catch(error => {
+          outputContainer.innerHTML = `<p>Error generating income statement: ${error.message}</p>`;
+        });
+    }
+
+    // Fetch and display Outstanding Payments
+    function fetchOutstandingPayments() {
+      const outputContainer = document.getElementById("outputContainer");
+      outputContainer.innerHTML = '<p>Loading Outstanding Payments...</p>';
+
+      fetch("fetch_outstanding_payments.php")
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            outputContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+          }
+
+          if (data.length === 0) {
+            outputContainer.innerHTML = '<p>No outstanding payments found.</p>';
+            return;
+          }
+
+          let tableHTML = `
+            <h2>Outstanding Payments</h2>
+            <table border="1" style="border-collapse: collapse; width: 100%; text-align: left;">
+              <tr>
+                <th>Customer ID</th>
+                <th>Customer Name</th>
+                <th>Outstanding Amount</th>
+              </tr>
+          `;
+
+          let totalOutstanding = 0;
+
+          data.forEach(row => {
+            tableHTML += `
+              <tr>
+                <td>${row.customer_id}</td>
+                <td>${row.customer_name}</td>
+                <td>${row.outstanding_amount.toFixed(2)}</td>
+              </tr>
+            `;
+            totalOutstanding += parseFloat(row.outstanding_amount);
+          });
+
+          tableHTML += `
+              <tr>
+                <td colspan="2"><strong>Total Outstanding</strong></td>
+                <td><strong>${totalOutstanding.toFixed(2)}</strong></td>
+              </tr>
+            </table>
+          `;
+
+          outputContainer.innerHTML = tableHTML;
+          document.getElementById("exportContainer").style.display = "block";
+        })
+        .catch(error => {
+          outputContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
+        });
+    }
+
+    // Fetch and render a generic Chart.js chart
+    function fetchAndRenderChart(apiUrl, chartTitle, chartType, xLabel, yLabel) {
+      const chartContainer = document.getElementById("chartContainer");
+      chartContainer.style.display = "block";
+
+      fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            document.getElementById("outputContainer").innerHTML = `<p>${data.error}</p>`;
+            return;
+          }
+
+          const labels = data.map(row => row.customer_name || row.month);
+          const dataset = data.map(row => row.total_sales || row.outstanding_amount);
+
+          if (activeChart) {
+            activeChart.destroy();
+          }
+
+          const ctx = document.getElementById("chartCanvas").getContext("2d");
+          activeChart = new Chart(ctx, {
+            type: chartType,
+            data: {
+              labels: labels,
+              datasets: [{
+                label: yLabel,
+                data: dataset,
+                backgroundColor: "rgba(54, 162, 235, 0.2)",
+                borderColor: "rgba(54, 162, 235, 1)",
+                borderWidth: 1
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                title: {
+                  display: true,
+                  text: chartTitle
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  title: {
+                    display: true,
+                    text: yLabel
+                  }
+                },
+                x: {
+                  title: {
+                    display: true,
+                    text: xLabel
+                  }
+                }
+              }
+            }
+          });
+        })
+        .catch(error => {
+          document.getElementById("outputContainer").innerHTML = `<p>Error fetching data: ${error.message}</p>`;
+        });
+    }
+
+    // Fetch and display Year-to-Date Performance
+    function fetchYearToDatePerformance() {
+      const outputContainer = document.getElementById("outputContainer");
+
+      fetch("fetch_year_to_date.php")
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            outputContainer.innerHTML = `<p>${data.error}</p>`;
+            return;
+          }
+
+          const { net_sales, net_profit } = data;
+
+          outputContainer.innerHTML = `
+            <h2>Year-to-Date Performance</h2>
+            <table border="1" style="border-collapse: collapse; width: 100%; text-align: left;">
+              <tr>
+                <th>Net Sales</th>
+                <td>INR ${net_sales.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <th>Net Profit</th>
+                <td>INR ${net_profit.toFixed(2)}</td>
+              </tr>
+            </table>
+          `;
+        })
+        .catch(error => {
+          outputContainer.innerHTML = `<p>Error fetching data: ${error.message}</p>`;
+        });
+    }
+
+    function fetchUniversalAggregatedFields() {
+      const outputContainer = document.getElementById("outputContainer");
+      outputContainer.innerHTML = '<p>Loading aggregate data...</p>';
+
+      fetch('fetch_aggregates.php')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const results = `
+              <h3>Aggregated Financial Metrics</h3>
+              <table class="aggregated-metrics">
+                <tr>
+                  <th>Net Sales</th>
+                  <td>${data.net_collectable}</td>
+                </tr>
+                <tr>
+                  <th>Net Amount Received</th>
+                  <td>${data.net_amount_received}</td>
+                </tr>
+                <tr>
+                  <th>Total Collection Due</th>
+                  <td>${data.total_collection_due}</td>
+                </tr>
+                <tr>
+                  <th>Total Profit</th>
+                  <td>${data.total_profit}</td>
+                </tr>
+                <tr>
+                  <th>Net Margin</th>
+                  <td>${data.net_margin}%</td>
+                </tr>
+              </table>
+            `;
+            outputContainer.innerHTML = results;
+          } else {
+            outputContainer.innerHTML = `Error: ${data.message}`;
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching aggregate data:', error);
+          outputContainer.innerHTML = 'Error fetching data.';
+        });
+    }
+  </script>
+
+  <!-- Load external scripts. Ensure they are loaded in order using 'defer' -->
+  <script src="customerContributionPieChart.js" defer></script>
+  <script src="monthlyProfitTrends.js" defer></script>
+  <script src="revenueProfitTrends.js" defer></script>
+  <script src="scenarioRevenueProfitTrends.js" defer></script>
+  <script src="transactionTracker.js" defer></script>
+  <script src="eventTracker.js" defer></script>
+  <script src="handleTransactions.js" defer></script>
+  <script src="fetchBackendAmountDues.js" defer></script>
+  <script src="threadedTransactionTracker.js" defer></script>
+  <script src="customerStatement.js" defer></script>
+  <script src="fetchLastTenTransactions.js" defer></script>
+  <script src="customerCreditScore.js" defer></script>
+  <script src="goalSeeker.js" defer></script>
+</body>
+</html>
