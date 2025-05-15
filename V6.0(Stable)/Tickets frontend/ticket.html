@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Ticket</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="clearfix">
+        <h1 class="ticket-heading">Ticket</h1>
+        <div class="trip-id">Trip ID: SDLPATM_25281233324</div>
+        <img src="elements/Logo.png" alt="Shree Dhanlaxmi Travels Logo" class="logo">
+    </header>
+    <main class="container">
+        <div class="ticket-wrapper">
+            <div class="ticket-wrapper">
+                <div class="trip-details">
+                    <p style="color:black; font-weight:bold; margin-bottom: 0px; padding-bottom: 0px;">
+                        Mumbai(T1) - Bhavnagar  
+                        <span style="font-size: 10px;">Sun, May 18, 2025</span>
+                    </p>
+                </div>
+                <div class="airline-details" style="margin-top: -10px; padding-top: 0px;">
+                    <div class="airline-info">
+                        <p class="airline-name" id="airline-name-placeholder">SpiceJet</p>
+                        <p>Flight Number: <span id="flight-number-placeholder">SG-1082</span></p>
+                        <!-- Updated baggage info line -->
+                        <p class="baggage-info">
+                          Baggage (per Adult/Child) – Check-in: 
+                          <span id="baggage-checkin-weight-placeholder">15</span>kg *
+                          <span id="baggage-checkin-count-placeholder">1</span> piece = 
+                          <span id="total-checked-weight-placeholder">[Total checked weight]</span>kg, Cabin: 
+                          <span id="baggage-cabin-weight-placeholder">7</span>kg
+                        </p>
+                    </div>
+                    <div>
+                        <p class="flight-info" style="font-family: 'Garamond', serif; color: #888; margin-bottom: 0;">
+                          Departure: <span id="departure-airport-code-placeholder">BOM</span> - 15:25
+                        </p>
+                        <img src="elements/darrow.png" alt="Vertical Divider" class="divider" style="height: 40px; display: block; margin: 0 auto; margin-top: -10px; margin-bottom: -10px; margin-left: 120px; padding: 0;">
+                        <p class="flight-duration" style="margin: 0; margin-left: 80px;">Flight Duration: 1h 10min</p>
+                        <img src="elements/darrow.png" alt="Vertical Divider" class="divider" style="height: 40px; display: block; margin: 0 auto; margin-top: -10px; margin-bottom: -10px; margin-left: 120px; padding: 0;">
+                        <p class="flight-info" style="font-family: 'Garamond', serif; color: #888; margin-top: 0; position: relative;">
+                          Arrival: <span id="arrival-airport-code-placeholder">BHU</span> - 
+                          <span id="arrival-time-placeholder">16:35</span>
+                          <span id="date-change-placeholder"></span>
+                        </p>
+                    </div>  
+                </div>
+
+                <div class="passenger-details">
+                    <h2>Passengers</h2>
+                    <table class="passenger-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Barcode</th>
+                                <th>Airline PNR</th>
+                                <th>Ticket Number</th>
+                            </tr>
+                        </thead>
+                        
+        <tr>
+          <td>Mr. MAHEBOOBALI RAMJANBHAI ASARIYA</td>
+          <td><img src="uploads\99cf17abf1828cb2e05415e4f58d8117" alt="Barcode for passenger 1" style="width: 100px;"></td>
+          <td>HDWFKW</td>
+          <td>HDWFKW</td>
+        </tr>
+      
+        <tr>
+          <td>Mrs. SHABANA MAHEBOOBALI ASARIYA</td>
+          <td><img src="uploads\4d6e418d7d6131fec1827c6aaf1086d2" alt="Barcode for passenger 2" style="width: 100px;"></td>
+          <td>HDWFKW</td>
+          <td>HDWFKW</td>
+        </tr>
+      
+                    </table>
+                </div>
+
+                <div class="tip">
+                    <p class="tip-text">
+                      Tip: Remember to write your child's name and your hotel number on each card; also, include contact information for a trusted friend or relative. Provide a card to each child to carry with them throughout your absence.
+                    </p>
+                </div>
+
+                <div class="important-information">
+                    <h2 class="important-heading">Important Information</h2>
+                    <div class="important-tips">
+                        <ul>
+                            <li>Check-in Time: Please arrive at the airport at least 4 hours before departure. Check-in counters generally close 120 minutes before the scheduled departure. It is advisable to confirm with your airline.</li>
+                            <li>Transit Visa Requirement: Travelers are responsible for ensuring they are eligible to enter the destination or transit countries. Shree Dhanlaxmi Travel accepts no liability regarding eligibility. Always check regulatory websites before travel.</li>
+                            <li>Travel Documentation: Passengers must carry a valid passport and visa for international flights. The passport should be valid for at least six months from the day of departure. For domestic flights, any government-issued photo ID, such as an Aadhar card, driving license, or voter ID, is acceptable. Please present hard copies of your visa or government ID at immigration or check-in as required.</li>
+                            <li>Baggage Policies: Adhere to the airline’s baggage dimension guidelines to avoid additional charges or denied boarding. Refer to the airline's website for detailed information.</li>
+                            <li>Travel Insurance: We strongly recommend purchasing comprehensive travel insurance to cover medical expenses, lost luggage, and flight cancellations. Secure your peace of mind by ensuring coverage for all aspects of your trip.</li>
+                            <li>Travel Precautions: Always verify the latest travel rules and eligibility on the regulatory website of the country you are traveling to. Changes in guidelines may occur without notice.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="fare-breakup">
+                    <h2>Fare Breakup</h2>
+                    <ul>
+                        <li>Base Fare: Rs. <span id="base-fare-placeholder">0</span></li>
+                        <li>Taxes and Fees: Rs. <span id="taxes-fees-placeholder">0</span></li>
+                        <li>GST(Airline): Rs. <span id="gst-airline-placeholder">0</span></li>
+                        <li>Discounts And Cashbacks: Rs. <span id="discounts-cashbacks-placeholder">0</span></li>
+                        <li>Total Fare: Rs. <span id="total-fare-placeholder">0</span></li>
+                    </ul>
+                </div>
+                
+                <script>
+                    // Calculate total fare
+                    const baseFare = parseFloat(document.getElementById('base-fare-placeholder').innerText);
+                    const taxesFees = parseFloat(document.getElementById('taxes-fees-placeholder').innerText);
+                    const gstAirline = parseFloat(document.getElementById('gst-airline-placeholder').innerText);
+                    const discountsCashbacks = parseFloat(document.getElementById('discounts-cashbacks-placeholder').innerText);
+                
+                    const totalFare = baseFare + taxesFees + gstAirline - discountsCashbacks;
+                    document.getElementById('total-fare-placeholder').innerText = totalFare.toFixed(2);
+                </script>
+
+                <script>
+                    // Convert specified fields to uppercase
+                    const fieldsToConvert = [
+                        'airline-name-placeholder',
+                        'departure-airport-code-placeholder',
+                        'arrival-airport-code-placeholder',
+                        'airline-pnr-placeholder'
+                    ];
+                
+                    fieldsToConvert.forEach(fieldId => {
+                        const element = document.getElementById(fieldId);
+                        if (element) {
+                            element.textContent = element.textContent.toUpperCase();
+                        }
+                    });
+                </script>
+                
+                <script>
+                    // Calculate total checked weight for baggage (Check-in weight * No. of Check-ins)
+                    function calculateTotalCheckedWeight() {
+                        const checkinWeight = parseFloat(document.getElementById('baggage-checkin-weight-placeholder').innerText) || 0;
+                        const checkinCount = parseFloat(document.getElementById('baggage-checkin-count-placeholder').innerText) || 0;
+                        const totalWeight = checkinWeight * checkinCount;
+                        document.getElementById('total-checked-weight-placeholder').innerText = totalWeight.toFixed(0);
+                    }
+                    calculateTotalCheckedWeight();
+                </script>
+
+                <div class="barcode-section">
+                    <!-- Include barcode image or representation here -->
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer class="clearfix">
+        <p>&copy; Shree Dhanlaxmi Travels 2024</p>
+    </footer>
+</body>
+</html>

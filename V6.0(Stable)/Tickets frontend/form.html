@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-IX8p2Yi+czE4M5I/nu0iXnVmKw3o1Wn5C5/O7RpY6RhRZgskl8Xq1t6S0FZt3VfjbzUDkl7qSG6YzlBlXq29OQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <title>Update Ticket Information</title>
+  <style>
+    body {
+      font-family: 'Roboto Mono', monospace;
+      background-color: #0A1931;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 600px;
+      padding: 40px;
+      background-color: #fff;
+      border-radius: 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      position: relative;
+      overflow: auto; /* Enable overflow scrolling */
+      max-height: calc(100vh - 80px); /* Adjust height as needed */
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    form {
+      margin-top: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 18px;
+    }
+    input[type="text"],
+    input[type="number"],
+    input[type="date"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 2px solid #1BFFFF;
+      border-radius: 4px;
+      box-sizing: border-box;
+      font-size: 16px;
+      background-color: rgba(255, 255, 255, 0.8);
+      font-family: 'Roboto Mono', monospace;
+      font-weight: bold;
+    }
+    button[type="submit"] {
+      background: linear-gradient(135deg, #2E3192, #1BFFFF);
+      color: white;
+      padding: 14px 20px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      font-size: 16px;
+      transition: background 0.3s;
+      font-family: 'Roboto Mono', monospace;
+      font-weight: bold;
+    }
+    /* Style for the barcode uploading button */
+    input[type="file"]#barcode {
+      display: inline-block;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 50px;
+      background: linear-gradient(135deg, #2E3192, #1BFFFF);
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+      position: relative;
+      overflow: hidden;
+      outline: none;
+    }
+    /* Smooth color transition on hover */
+    input[type="file"]#barcode:hover {
+      background: linear-gradient(135deg, #1BFFFF, #2E3192);
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    }
+    /* Gradient color animation */
+    @keyframes rainbow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    /* Rainbow effect on the barcode uploading button */
+    input[type="file"]#barcode::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #FF0018, #FFA52C, #FFFF41, #008018, #0000F9, #86007D);
+      border-radius: 50%;
+      z-index: -1;
+      animation: rainbow 3s linear infinite;
+    }
+    /* Circles background */
+    .shape {
+      position: absolute;
+      opacity: 0.3;
+      pointer-events: none;
+      animation: move 20s linear infinite alternate;
+    }
+    .square {
+      background-color: #FFBA08;
+      width: 100px;
+      height: 100px;
+      top: 100px;
+      left: -50px;
+      animation-delay: 0s;
+    }
+    .circle {
+      background-color: #FF8C00;
+      width: 100px;
+      height: 100px;
+      top: -50px;
+      right: -50px;
+      border-radius: 50%;
+      animation-delay: 5s;
+    }
+    .ellipse {
+      background-color: #FF5733;
+      width: 150px;
+      height: 100px;
+      bottom: -100px;
+      left: -75px;
+      border-radius: 50%;
+      animation-delay: 10s;
+    }
+    @keyframes move {
+      to {
+        transform: translateX(400px) translateY(100px);
+      }
+    }
+    /* Style for flight suggestions list */
+    #flight-suggestions {
+      border: 1px solid #ccc;
+      background-color: #fff;
+      max-height: 150px;
+      overflow-y: auto;
+      position: absolute;
+      width: calc(100% - 84px);
+      z-index: 10;
+      font-size: 12px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      display: none;
+    }
+    #flight-suggestions div {
+      padding: 8px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    #flight-suggestions div:hover {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Update Ticket Information</h1>
+    <!-- Main form for updating ticket info -->
+    <form action="/update-ticket-info" method="POST" enctype="multipart/form-data">
+      <!-- Flight Number -->
+      <label for="flight-number">Flight Number:</label>
+      <input type="text" id="flight-number" name="flightNumber" autocomplete="off" required>
+      <!-- Flight suggestions will appear here -->
+      <div id="flight-suggestions"></div>
+      
+      <!-- Number of Passengers -->
+      <label for="num-passengers">Number of Passengers:</label>
+      <input type="number" id="num-passengers" name="numPassengers" min="1" required>
+      
+      <!-- Passenger details container -->
+      <div id="passenger-details">
+        <!-- Passenger details will be inserted here dynamically -->
+        <div class="passenger-section">
+          <label for="passenger-name-1">Passenger 1 Name:</label>
+          <input type="text" id="passenger-name-1" name="passengerNames[]" required>
+          <label for="ticket-number-1">Ticket Number for Passenger 1:</label>
+          <input type="text" id="ticket-number-1" name="ticketNumbers[]" required>
+        </div>
+      </div>
+      
+      <!-- Barcode inputs container (generated dynamically, but not used now) -->
+      <div id="barcode-inputs"></div>
+      
+      <!-- Trip ID -->
+      <label for="trip-id">Trip Id:</label>
+      <input type="text" id="trip-id" name="tripId" required>
+      
+      <!-- Origin City -->
+      <label for="origin-city">Origin City:</label>
+      <input type="text" id="origin-city" name="originCity" required>
+      
+      <!-- Destination City -->
+      <label for="destination-city">Destination City:</label>
+      <input type="text" id="destination-city" name="destinationCity" required>
+      
+      <!-- Departure Date -->
+      <label for="departure-date">Departure Date (YYYY-MM-DD):</label>
+      <input type="date" id="departure-date" name="departureDate" required>
+      
+      <!-- Airline Name -->
+      <label for="airline-name">Airline Name:</label>
+      <input type="text" id="airline-name" name="airlineName" required>
+      
+      <!-- Departure Airport Code -->
+      <label for="departure-airport-code">Departure Airport Code:</label>
+      <input type="text" id="departure-airport-code" name="departureAirportCode" required>
+      
+      <!-- Departure Time -->
+      <label for="departure-time">Departure Time (HH:MM):</label>
+      <input type="text" id="departure-time" name="departureTime" required>
+      
+      <!-- Flight Duration -->
+      <label for="flight-duration">Flight Duration (HH:mm):</label>
+      <input type="text" id="flight-duration" name="flightDuration" required>
+      
+      <!-- Arrival Airport Code -->
+      <label for="arrival-airport-code">Arrival Airport Code:</label>
+      <input type="text" id="arrival-airport-code" name="arrivalAirportCode" required>
+      
+      <!-- Arrival Time -->
+      <label for="arrival-time">Arrival Time (HH:MM):</label>
+      <input type="text" id="arrival-time" name="arrivalTime" required>
+      
+      <!-- New: Date Change Checkbox -->
+      <label for="date-change">Date Change?</label>
+      <input type="checkbox" id="date-change" name="dateChange">
+
+      <div id="date-change-number-container" style="display: none;">
+        <label for="date-change-number">How many?</label>
+        <input type="number" id="date-change-number" name="dateChangeNumber" min="1" max="10">
+      </div>
+      
+      <!-- NEW: Baggage fields + Domestic flight checkbox -->
+      <label for="baggage-checkin-weight">Baggage Check-in Weight (Kg):</label>
+      <input type="number" id="baggage-checkin-weight" name="baggageCheckinWeight" value="23" required>
+      
+      <label for="baggage-checkin-count">Number of Check-ins:</label>
+      <input type="number" id="baggage-checkin-count" name="baggageCheckinCount" value="2" required>
+      
+      <label for="baggage-cabin-weight">Cabin Weight (Kg):</label>
+      <input type="number" id="baggage-cabin-weight" name="baggageCabinWeight" value="7" required>
+      
+      <label for="is-domestic">Domestic Flights?</label>
+      <input type="checkbox" id="is-domestic" name="isDomestic">
+      
+      <!-- Airline PNR -->
+      <label for="airline-pnr">Airline PNR:</label>
+      <input type="text" id="airline-pnr" name="airlinePNR" required>
+      
+      <!-- Base Fare -->
+      <label for="base-fare">Base Fare:</label>
+      <input type="text" id="base-fare" name="baseFare" required>
+      
+      <!-- Discounts & Cashbacks -->
+      <label for="discounts-cashbacks">Discounts And Cashbacks:</label>
+      <input type="text" id="discounts-cashbacks" name="discountsCashbacks" required>
+      
+      <!-- Taxes & Fees -->
+      <label for="taxes-fees">Taxes and Fees:</label>
+      <input type="text" id="taxes-fees" name="taxesFees" required>
+      
+      <!-- GST (Airline) -->
+      <label for="gst-airline">GST(Airline):</label>
+      <input type="text" id="gst-airline" name="gstAirline" required>
+      
+      <!-- Place this block above the existing submit button -->
+      <label for="transaction-id">Transaction ID:</label>
+      <input type="text" id="transaction-id" name="transactionId" required>
+      
+      <!-- Submit button -->
+      <button type="submit">Submit</button>
+    </form>
+    
+    <!-- Form to revert ticket info to default (Base ticket.html) -->
+    <form action="/revert-ticket-info" method="GET">
+      <button type="submit">Reverse</button>
+    </form>
+  </div>
+  
+  <!-- Existing script for passenger fields generation -->
+  <script>
+    const numPassengersInput = document.getElementById('num-passengers');
+    const passengerDetails = document.getElementById('passenger-details');
+    
+    // Function to generate passenger input fields
+    function generatePassengerFields(num) {
+      passengerDetails.innerHTML = ''; // Clear existing fields
+      for (let i = 1; i <= num; i++) {
+        const passengerSection = document.createElement('div');
+        passengerSection.classList.add('passenger-section');
+        
+        const passengerNameLabel = document.createElement('label');
+        passengerNameLabel.textContent = `Passenger ${i} Name:`;
+        passengerSection.appendChild(passengerNameLabel);
+        
+        const passengerNameInput = document.createElement('input');
+        passengerNameInput.type = 'text';
+        passengerNameInput.name = `passengerNames[]`;
+        passengerNameInput.required = true;
+        passengerSection.appendChild(passengerNameInput);
+        
+        const ticketNumberLabel = document.createElement('label');
+        ticketNumberLabel.textContent = `Ticket Number for Passenger ${i}:`;
+        passengerSection.appendChild(ticketNumberLabel);
+        
+        const ticketNumberInput = document.createElement('input');
+        ticketNumberInput.type = 'text';
+        ticketNumberInput.name = `ticketNumbers[]`;
+        ticketNumberInput.required = true;
+        passengerSection.appendChild(ticketNumberInput);
+        
+        const barcodeLabel = document.createElement('label');
+        barcodeLabel.textContent = `Barcode for Passenger ${i} (PNG):`;
+        passengerSection.appendChild(barcodeLabel);
+        
+        const barcodeInput = document.createElement('input');
+        barcodeInput.type = 'file';
+        barcodeInput.id = `barcode${i}`;
+        barcodeInput.name = `barcodes`;
+        barcodeInput.className = 'barcode-upload-btn';
+        barcodeInput.accept = 'image/png';
+        barcodeInput.required = true;
+        passengerSection.appendChild(barcodeInput);
+        
+        passengerDetails.appendChild(passengerSection);
+      }
+    }
+    
+    // Update passenger fields on numPassengers change
+    numPassengersInput.addEventListener('change', () => {
+      const numPassengers = parseInt(numPassengersInput.value);
+      generatePassengerFields(numPassengers);
+    });
+    
+    // Generate initial passenger fields (assuming at least one passenger)
+    generatePassengerFields(1);
+  </script>
+  
+  <!-- Existing SCRIPT: Load flight info from DB based on Flight Number -->
+  <script>
+    const flightNumberInput = document.getElementById('flight-number');
+    
+    flightNumberInput.addEventListener('change', () => {
+      const flightNum = flightNumberInput.value.trim();
+      if (!flightNum) return; // No flight number, skip
+      
+      // Make a request to server to get flight info
+      fetch(`/get-flight-info?flightNumber=${encodeURIComponent(flightNum)}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data && data.found) {
+            // If the flight was found, fill the form fields
+            document.getElementById('trip-id').value = data.trip_id || '';
+            document.getElementById('origin-city').value = data.origin_city || '';
+            document.getElementById('destination-city').value = data.destination_city || '';
+            document.getElementById('departure-date').value = data.departure_date || '';
+            document.getElementById('airline-name').value = data.airline_name || '';
+            document.getElementById('departure-airport-code').value = data.departure_airport_code || '';
+            document.getElementById('departure-time').value = data.departure_time || '';
+            document.getElementById('flight-duration').value = data.flight_duration || '';
+            document.getElementById('arrival-airport-code').value = data.arrival_airport_code || '';
+            document.getElementById('arrival-time').value = data.arrival_time || '';
+            document.getElementById('airline-pnr').value = data.airline_pnr || '';
+            document.getElementById('base-fare').value = data.base_fare || '';
+            document.getElementById('discounts-cashbacks').value = data.discounts_cashbacks || '';
+            document.getElementById('taxes-fees').value = data.taxes_fees || '';
+            document.getElementById('gst-airline').value = data.gst_airline || '';
+            
+            // Baggage fields
+            document.getElementById('baggage-checkin-weight').value = data.baggage_checkin_weight || '23';
+            document.getElementById('baggage-checkin-count').value = data.baggage_checkin_count || '2';
+            document.getElementById('baggage-cabin-weight').value = data.baggage_cabin_weight || '7';
+            
+            // Domestic flight
+            const isDomestic = parseInt(data.is_domestic) === 1;
+            document.getElementById('is-domestic').checked = isDomestic;
+          } else {
+            console.log('No flight info found for:', flightNum);
+          }
+        })
+        .catch(err => console.error('Error fetching flight info:', err));
+    });
+  </script>
+  
+  <!-- Existing SCRIPT: Toggle default baggage based on Domestic checkbox -->
+  <script>
+    const isDomesticCheckbox = document.getElementById('is-domestic');
+    const checkinWeightInput = document.getElementById('baggage-checkin-weight');
+    const checkinCountInput = document.getElementById('baggage-checkin-count');
+    const cabinWeightInput = document.getElementById('baggage-cabin-weight');
+    
+    function setBaggageDefaults() {
+      if (isDomesticCheckbox.checked) {
+        checkinWeightInput.value = 15;
+        checkinCountInput.value = 1;
+        cabinWeightInput.value = 7;
+      } else {
+        checkinWeightInput.value = 23;
+        checkinCountInput.value = 2;
+        cabinWeightInput.value = 7;
+      }
+    }
+    
+    isDomesticCheckbox.addEventListener('change', () => {
+      setBaggageDefaults();
+    });
+    
+    window.addEventListener('load', () => {
+      setBaggageDefaults();
+    });
+  </script>
+  
+  <!-- NEW SCRIPT: Dynamic flight suggestions -->
+  <script>
+    const suggestionsDiv = document.getElementById('flight-suggestions');
+    
+    function renderSuggestions(suggestions) {
+      suggestionsDiv.innerHTML = '';
+      if (suggestions.length === 0) {
+        const noData = document.createElement('div');
+        noData.textContent = "No previous data found - Please input all the details.";
+        suggestionsDiv.appendChild(noData);
+      } else {
+        suggestions.forEach(item => {
+          const suggestionItem = document.createElement('div');
+          suggestionItem.innerHTML = `<strong>${item.flight_number}</strong> : ${item.origin_city} [${item.departure_time}] - ${item.destination_city} [${item.arrival_time}]`;
+          suggestionItem.addEventListener('click', () => {
+            flightNumberInput.value = item.flight_number;
+            suggestionsDiv.style.display = 'none';
+            // Trigger change event to load flight info
+            flightNumberInput.dispatchEvent(new Event('change'));
+          });
+          suggestionsDiv.appendChild(suggestionItem);
+        });
+      }
+      suggestionsDiv.style.display = 'block';
+    }
+    
+    function fetchFlightSuggestions(query) {
+      fetch(`/search-flight-info?query=${encodeURIComponent(query)}`)
+        .then(response => response.text())
+        .then(text => {
+          try {
+            const data = JSON.parse(text);
+            if (Array.isArray(data)) {
+              renderSuggestions(data);
+            } else {
+              renderSuggestions([]);
+            }
+          } catch (err) {
+            console.error('Error parsing flight suggestions JSON:', err);
+            renderSuggestions([]);
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching flight suggestions:', err);
+          renderSuggestions([]);
+        });
+    }
+    
+    flightNumberInput.addEventListener('input', () => {
+      const query = flightNumberInput.value.trim();
+      if (query.length >= 2) {
+        fetchFlightSuggestions(query);
+      } else {
+        suggestionsDiv.style.display = 'none';
+      }
+    });
+    
+    document.addEventListener('click', (event) => {
+      if (!flightNumberInput.contains(event.target) && !suggestionsDiv.contains(event.target)) {
+        suggestionsDiv.style.display = 'none';
+      }
+    });
+  </script>
+  
+  <!-- New SCRIPT: Toggle date change number input based on Date Change checkbox -->
+  <script>
+    document.getElementById('date-change').addEventListener('change', function() {
+      const container = document.getElementById('date-change-number-container');
+      container.style.display = this.checked ? 'block' : 'none';
+    });
+  </script>
+  
+  <!-- New SCRIPT: Determine dateChangedBy -->
+  <script>
+    const dateChange = document.getElementById('date-change').checked ? 'on' : 'off';
+    const dateChangeNumber = document.getElementById('date-change-number').value;
+    const dateChangedBy = dateChange === 'on' ? (parseInt(dateChangeNumber, 10) || 0) : 0;
+  </script>
+</body>
+</html>

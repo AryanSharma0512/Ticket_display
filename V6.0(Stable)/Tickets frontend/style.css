@@ -1,0 +1,304 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(to bottom right, #3498db, #8e44ad); /* Gradient background */
+}
+
+header.clearfix {
+    background-color: #333;
+    color: #fff;
+    padding: 40px 20px; /* Increased padding to make the header larger */
+    position: relative; /* Ensure relative positioning for absolute logo */
+}
+
+.ticket-heading {
+    font-family: "Garamond", serif;
+    font-weight: bold; /* Make "Ticket" bold */
+    font-size: 24px; /* Adjust font size as needed */
+    margin: 0; /* Remove default margin */
+}
+
+.trip-id {
+    font-family: "Lucida Console", "Courier New", monospace; /* Change font family */
+    font-size: 14px; /* Adjust font size as needed */
+    margin-top: 5px; /* Add spacing between ticket heading and trip ID */
+}
+
+.logo {
+    position: absolute;
+    top: 10px;
+    right: 20px; /* Adjust right position to give space from the right edge */
+    width: 180px; /* Adjust width as needed */
+    height: auto; /* Maintain aspect ratio */
+    z-index: 1000; /* Ensure it's on top */
+}
+
+main {
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.ticket-wrapper {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.trip-details {
+    font-family: "Garamond", serif;
+    font-size: 24px;
+    margin-bottom: 0px;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.trip-details p {
+    font-weight: normal; /* Remove bold from all paragraphs inside .trip-details */
+    font-size: 18px; /* Adjust font size as needed */
+    margin: 0; /* Remove default margin */
+}
+
+.tip {
+    background-color: #f2f2f2;
+    border-left: 4px solid #ddd;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+
+.tip-text {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #777;
+}
+
+.airline-details,
+.passenger-details,
+.barcode-section {
+    margin-bottom: 15px;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.important-information {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.important-heading {
+    font-family: "Arial Black", sans-serif;
+    font-size: 24px;
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.important-tips {
+    font-family: Arial, sans-serif;
+    color: #555;
+}
+
+.important-tips ul {
+    list-style-type: disc;
+    margin-left: 20px;
+}
+
+.important-tips ul li {
+    margin-bottom: 10px;
+}
+
+/* Fare Breakup section styling */
+.fare-breakup {
+    margin-left: 20px;
+}
+
+.fare-breakup h2 {
+    font-family: "Times New Roman", serif;
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.fare-breakup ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.fare-breakup li {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: #777;
+    margin-bottom: 5px;
+}
+
+
+.passenger-details {
+    margin-bottom: 30px;
+}
+
+.passenger-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.passenger-table th,
+.passenger-table td {
+    padding: 10px;
+    text-align: center;
+}
+
+.passenger-table th {
+    background-color: #333;
+    color: #fff;
+}
+
+.passenger-table tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.passenger-table tbody tr:hover {
+    background-color: #ddd;
+}
+
+.passenger-table td {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #333;
+}
+
+.passenger-table th,
+.passenger-table td:first-child {
+    border-right: 1px solid #ddd;
+}
+
+.passenger-table th:last-child,
+.passenger-table td:last-child {
+    border-right: none;
+}
+
+
+h2 {
+    margin-top: 0;
+}
+
+.booking-date {
+    font-size: 10px; /* Smaller size for the booking date */
+    color: #555; /* Subdued color for less emphasis */
+}
+
+.airline-details {
+    display: flex;
+    align-items: center;
+    margin-top: 0; /* Remove top margin to reduce space */
+    padding-top: 0; /* Ensure no padding above */
+}
+
+.airline-name {
+    font-family: 'Poppins', sans-serif;
+    font-weight: bold;
+    font-size: 20px;
+    color: #34495e;
+    letter-spacing: 0px; /* Adds space between letters for a more refined look */
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.center p:first-child {
+    font-weight: bold; /* Apply bold font styling */
+    font-size: 20px; /* Optionally adjust the font size for better visibility */
+}
+
+.flight-info p:first-child {
+    margin-bottom: 0; /* Adjust this if it adds extra space */
+    padding-bottom: 0; /* Remove unnecessary padding */
+}
+.flight-info p:nth-child(2) {
+    font-weight: bold;
+    font-family: "Nova Flat", sans-serif;
+}
+
+.airline-info p {
+    margin: 10px;
+    margin-left: -10px;
+    padding: 0 10px;
+}
+
+.flight-info {
+    font-family: 'Garamond', serif; /* Keep font consistent with other info */
+    margin-left: 80px;
+    margin-top: 25px;
+    margin-bottom: 0px;
+    color: #888;
+    font-size: 16px;    
+    font-weight: bold;
+    position: relative; 
+}
+
+#date-change-placeholder {
+    position: absolute;
+    /* nudge it 3px down from the top of the .flight-info box */
+    top: -5px;
+    /* pull it 8px left from the right edge of .flight-info */
+    right: -9px;
+    font-size: 0.65em;
+    color: grey;
+  }
+
+.baggage-info {
+    font-family: "Garamond", serif; 
+    font-weight: bold;
+    font-size: 14px; 
+    color: #888; 
+    margin-top: 5px; 
+    margin-right: 30px;
+}
+
+.divider {
+    height: 15px; /* Reduce height for a smaller arrow */
+    display: block;
+    margin: 0 auto; /* Center the arrow vertically between the sections */
+}
+
+.flight-info p {
+    margin: 0; /* Remove all extra margins between paragraphs */
+    padding: 0; /* Ensure no extra padding */
+}
+
+.flight-duration {
+    font-size: 12px; 
+    color: #aaa;
+    font-family: 'Garamond', serif; 
+}
+
+.barcode-upload-btn {
+    background: linear-gradient(to right, #6a11cb, #9b35cc); /* Gradient background */
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+.barcode-upload-btn:hover {
+    background: linear-gradient(to right, #9b35cc, #6a11cb); /* Gradient background on hover */
+}
+
+.barcode-upload-btn:focus {
+    outline: none;
+}
+
+footer.clearfix {
+    background-color: #333;
+    color: #fff;
+    padding: 15px 20px;
+}
