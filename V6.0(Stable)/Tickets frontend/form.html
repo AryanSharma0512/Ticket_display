@@ -265,7 +265,10 @@
       
       <!-- Airline PNR -->
       <label for="airline-pnr">Airline PNR:</label>
-      <input type="text" id="airline-pnr" name="airlinePNR" required>
+      <div id="pnr-container">
+        <input type="text" id="airline-pnr" name="airlinePNR" required>
+      </div>
+      <label><input type="checkbox" id="separate-pnrs" name="separatePnrs"> Separate PNRs</label>
       
       <!-- Base Fare -->
       <label for="base-fare">Base Fare:</label>
@@ -301,7 +304,9 @@
   <script>
     const numPassengersInput = document.getElementById('num-passengers');
     const passengerDetails = document.getElementById('passenger-details');
-    
+    const separatePnrsCheckbox = document.getElementById('separate-pnrs');
+    const pnrContainer = document.getElementById('pnr-container');
+
     // Function to generate passenger input fields
     function generatePassengerFields(num) {
       passengerDetails.innerHTML = ''; // Clear existing fields
@@ -345,15 +350,45 @@
         passengerDetails.appendChild(passengerSection);
       }
     }
-    
+
+    function generatePnrFields(num) {
+      pnrContainer.innerHTML = '';
+      if (separatePnrsCheckbox.checked) {
+        for (let i = 1; i <= num; i++) {
+          const lbl = document.createElement('label');
+          lbl.textContent = `PNR for Passenger ${i}:`;
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.name = 'airlinePNR[]';
+          input.required = true;
+          pnrContainer.appendChild(lbl);
+          pnrContainer.appendChild(input);
+        }
+      } else {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'airline-pnr';
+        input.name = 'airlinePNR';
+        input.required = true;
+        pnrContainer.appendChild(input);
+      }
+    }
+
     // Update passenger fields on numPassengers change
     numPassengersInput.addEventListener('change', () => {
       const numPassengers = parseInt(numPassengersInput.value);
       generatePassengerFields(numPassengers);
+      generatePnrFields(numPassengers);
     });
-    
+
+    separatePnrsCheckbox.addEventListener('change', () => {
+      const numPassengers = parseInt(numPassengersInput.value);
+      generatePnrFields(numPassengers);
+    });
+
     // Generate initial passenger fields (assuming at least one passenger)
     generatePassengerFields(1);
+    generatePnrFields(1);
   </script>
   
   <!-- Existing SCRIPT: Load flight info from DB based on Flight Number -->
