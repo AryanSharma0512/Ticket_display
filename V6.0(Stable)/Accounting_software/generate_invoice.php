@@ -29,9 +29,24 @@ if ($pd_conn->connect_error) {
 
 // 5) Get the txn from query string; accept either 'txn' or 'transaction_id'
 $txn = $_GET['txn'] ?? $_GET['transaction_id'] ?? '';
+$isB2BRequest = isset($_GET['b2b']) && $_GET['b2b'] == '1';
 if (!$txn) {
     die("No txn specified");
 }
+
+// Connect to taxes DB for B2B records
+include 'db_config_taxes.php';
+$tax_conn = new mysqli($tax_db_servername, $tax_db_username, $tax_db_password, $tax_db_name);
+if ($tax_conn->connect_error) {
+    die("Taxes DB connection failed: " . $tax_conn->connect_error);
+}
+
+$b2b_stmt = $tax_conn->prepare("SELECT * FROM B2B WHERE booking_id = ? LIMIT 1");
+$b2b_stmt->bind_param('s', $txn);
+$b2b_stmt->execute();
+$b2b_data = $b2b_stmt->get_result()->fetch_assoc();
+$b2b_stmt->close();
+$tax_conn->close();
 
 // Fetch the customer_id (CIN) from the accounting main_table using the transaction id
 $cin_sql = "SELECT customer_id FROM accounting.main_table WHERE transaction_id = ?";
@@ -57,81 +72,114 @@ $product_category = $an_result['product_category'] ?? '';
 $an_stmt->close();
 $an_conn->close();
 
-// 6) Pull master record + fare+discount from taxes.Yes_Bank_Records
-$sql = "
-  SELECT
-    m.transaction_id,
-    m.entry_date,
-    m.customer_name,
-    m.bill_amount,
-    y.Fare,
-    y.Effective_Discount,
-    m.product
-  FROM accounting.main_table AS m
-  LEFT JOIN taxes.Yes_Bank_Records AS y
-    ON y.Transaction_ID = m.transaction_id
-  WHERE m.transaction_id = ?
-";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param('s', $txn);
-$stmt->execute();
-$data = $stmt->get_result()->fetch_assoc();
-$stmt->close();
-if (!$data) {
-    die("Transaction not found");
+if ($isB2BRequest && $b2b_data) {
+    // Use B2B table values directly
+    $invoice_number   = $b2b_data['invoice_number'];
+    $booking_id       = $b2b_data['booking_id'];
+    $hsn_sac          = $b2b_data['hsn_sac_code'];
+    $service_desc     = $b2b_data['service_description'];
+    $customer_name    = $b2b_data['customer_name'];
+    $business_name    = $b2b_data['business_name'];
+    $business_address = $b2b_data['business_address'];
+    $business_gstin   = $b2b_data['business_gstin'];
+    $date             = $b2b_data['date'];
+    $place_of_supply  = $b2b_data['place_of_supply'];
+    $type_category    = $b2b_data['type_or_category'];
+    $txn_details      = $b2b_data['txn_details'];
+    $tax_rcm          = $b2b_data['tax_payable_under_rcm'];
+    $cin              = $b2b_data['cin'];
+    $fare             = floatval($b2b_data['fare_charges']);
+    $serviceFees_final= floatval($b2b_data['service_fee']);
+    $discount_adj     = floatval($b2b_data['effective_discount']);
+    $gst              = floatval($b2b_data['igst']);
+    $grandTotal       = $fare + $serviceFees_final + $gst - $discount_adj;
+
+    $passengers = [[
+        'Passenger_names'  => $b2b_data['passenger_name_or_eticket'],
+        'Eticket_numbers'  => '',
+        'PNR'              => $b2b_data['pnr'],
+        'Departure_date'   => $b2b_data['flight_date'],
+        'Flight_number'    => $b2b_data['flight_number'],
+        'Trip_id'          => $booking_id
+    ]];
+    $product_category = 'Ticket';
+} else {
+    // 6) Pull master record + fare+discount from taxes.Yes_Bank_Records
+    $sql = "
+      SELECT
+        m.transaction_id,
+        m.entry_date,
+        m.customer_name,
+        m.bill_amount,
+        y.Fare,
+        y.Effective_Discount,
+        m.product
+      FROM accounting.main_table AS m
+      LEFT JOIN taxes.Yes_Bank_Records AS y
+        ON y.Transaction_ID = m.transaction_id
+      WHERE m.transaction_id = ?
+    ";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('s', $txn);
+    $stmt->execute();
+    $data = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    if (!$data) {
+        die("Transaction not found");
+    }
+
+    // 7) Pull the requested passenger fields for this txn including Passenger_names
+    $pd_sql = "
+      SELECT
+        Departure_date,
+        Flight_number,
+        Passenger_names,
+        Eticket_numbers,
+        PNR,
+        Trip_id
+      FROM passenger_details
+      WHERE transaction_id = ?
+    ";
+    $pd_stmt = $pd_conn->prepare($pd_sql);
+    $pd_stmt->bind_param('s', $txn);
+    $pd_stmt->execute();
+    $passengers = $pd_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $pd_stmt->close();
+
+    // 8) Compute Service Fees with goal‑seeking for a rounded grand total & ~5% margin
+    $fare            = floatval($data['Fare'] ?? 0);
+    $discount        = floatval($data['Effective_Discount'] ?? 0);
+
+    // 1. Compute the initial service fee (ideal value)
+    $serviceFees0    = $fare * 5 / 95;
+
+    // 2. Compute the gross total ignoring GST (fare + service fee – discount)
+    $gross0          = $fare + $serviceFees0 - $discount;
+
+    // 3. Determine adjustment (x) to get a 5% margin (i.e. service fee / gross)
+    $x      = (0.05 * $gross0 - $serviceFees0) / 0.95;
+    $S_temp = $serviceFees0 + $x;
+
+    // 4. Compute a temporary grand total (including GST at 18% on service fee)
+    $G_temp = $fare - $discount + 1.18 * $S_temp;
+
+    // 5. Determine the desired grand total as an exact multiple of 10, and compute error
+    $desiredGrandTotal = round($G_temp, -1);      // exact multiple of ten
+    $error             = $desiredGrandTotal - $G_temp;
+
+    // 6. Adjust discount by subtracting the error (if error is positive, discount is reduced)
+    $discount_adj      = round($discount - $error, 2);
+
+    // 7. Recalculate the final service fee so that:
+    //    grandTotal = fare - adjusted discount + 1.18 * serviceFees_final equals desiredGrandTotal
+    $serviceFees_final = round(($desiredGrandTotal - ($fare - $discount_adj)) / 1.18, 2);
+    $gst               = round(0.18 * $serviceFees_final, 2);
+    $grandTotal        = $fare - $discount_adj + 1.18 * $serviceFees_final;
+
+    // (Optional) You can also calculate the effective margin as:
+    $gross_total      = $fare + $serviceFees_final - $discount_adj;
+    $margin           = round($serviceFees_final / $gross_total, 4);  // ideally near 0.05
 }
-
-// 7) Pull the requested passenger fields for this txn including Passenger_names
-$pd_sql = "
-  SELECT
-    Departure_date,
-    Flight_number,
-    Passenger_names,
-    Eticket_numbers,
-    PNR,
-    Trip_id
-  FROM passenger_details
-  WHERE transaction_id = ?
-";
-$pd_stmt = $pd_conn->prepare($pd_sql);
-$pd_stmt->bind_param('s', $txn);
-$pd_stmt->execute();
-$passengers = $pd_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$pd_stmt->close();
-
-// 8) Compute Service Fees with goal‑seeking for a rounded grand total & ~5% margin
-$fare            = floatval($data['Fare'] ?? 0);
-$discount        = floatval($data['Effective_Discount'] ?? 0);
-
-// 1. Compute the initial service fee (ideal value)
-$serviceFees0    = $fare * 5 / 95;
-
-// 2. Compute the gross total ignoring GST (fare + service fee – discount)
-$gross0          = $fare + $serviceFees0 - $discount;
-
-// 3. Determine adjustment (x) to get a 5% margin (i.e. service fee / gross)
-$x      = (0.05 * $gross0 - $serviceFees0) / 0.95;
-$S_temp = $serviceFees0 + $x;
-
-// 4. Compute a temporary grand total (including GST at 18% on service fee)
-$G_temp = $fare - $discount + 1.18 * $S_temp;
-
-// 5. Determine the desired grand total as an exact multiple of 10, and compute error
-$desiredGrandTotal = round($G_temp, -1);      // exact multiple of ten
-$error             = $desiredGrandTotal - $G_temp;
-
-// 6. Adjust discount by subtracting the error (if error is positive, discount is reduced)
-$discount_adj      = round($discount - $error, 2);
-
-// 7. Recalculate the final service fee so that:
-//    grandTotal = fare - adjusted discount + 1.18 * serviceFees_final equals desiredGrandTotal
-$serviceFees_final = round(($desiredGrandTotal - ($fare - $discount_adj)) / 1.18, 2);
-$gst               = round(0.18 * $serviceFees_final, 2);
-$grandTotal        = $fare - $discount_adj + 1.18 * $serviceFees_final;
-
-// (Optional) You can also calculate the effective margin as:
-$gross_total      = $fare + $serviceFees_final - $discount_adj;
-$margin           = round($serviceFees_final / $gross_total, 4);  // ideally near 0.05
 
 // Now use $serviceFees_final as your service fee and $gst and $grandTotal as computed.
 
@@ -239,25 +287,54 @@ $leftLabels  = [
   'Customer Name:'
 ];
 
-$leftValues  = [
-  $data['transaction_id'],
-  'DVWPS5495B',
-  '24DVWPS5495B1ZW',
-  (!empty($passengers) && isset($passengers[0]['Trip_id'])) ? $passengers[0]['Trip_id'] : $data['transaction_id'],
-  '998551',
-  ($product_category == "Ticket" ? "Reservation Services For Air Transportation" : ""),
-  $data['customer_name']
-];
+if ($isB2BRequest && $b2b_data) {
+    $leftLabels[] = 'Business Name:';
+    $leftLabels[] = 'Business Address:';
+    $leftLabels[] = 'Business GSTIN:';
+}
 
-$rightLabels = ['Date:','Place of Supply:','Type/Category:','Txn Details:','Tax Payable under RCM:','CIN:'];
-$rightValues = [
-  date('d-M-Y', strtotime($data['entry_date'])),
-  'Gujarat',
-  'B2C/REG',
-  'RG',
-  'No',
-  $cin
-];
+if ($isB2BRequest && $b2b_data) {
+    $leftValues  = [
+      $invoice_number,
+      'DVWPS5495B',
+      '24DVWPS5495B1ZW',
+      $booking_id,
+      $hsn_sac,
+      $service_desc,
+      $customer_name,
+      $business_name,
+      $business_address,
+      $business_gstin
+    ];
+    $rightLabels = ['Date:','Place of Supply:','Type/Category:','Txn Details:','Tax Payable under RCM:','CIN:'];
+    $rightValues = [
+      date('d-M-Y', strtotime($date)),
+      $place_of_supply,
+      $type_category,
+      $txn_details,
+      $tax_rcm,
+      $cin
+    ];
+} else {
+    $leftValues  = [
+      $data['transaction_id'],
+      'DVWPS5495B',
+      '24DVWPS5495B1ZW',
+      (!empty($passengers) && isset($passengers[0]['Trip_id'])) ? $passengers[0]['Trip_id'] : $data['transaction_id'],
+      '998551',
+      ($product_category == "Ticket" ? "Reservation Services For Air Transportation" : ""),
+      $data['customer_name']
+    ];
+    $rightLabels = ['Date:','Place of Supply:','Type/Category:','Txn Details:','Tax Payable under RCM:','CIN:'];
+    $rightValues = [
+      date('d-M-Y', strtotime($data['entry_date'])),
+      'Gujarat',
+      'B2C/REG',
+      'RG',
+      'No',
+      $cin
+    ];
+}
 
 $infoY=$pdf->GetY();
 $h=6; $off=4+$h;
@@ -279,7 +356,7 @@ for($i=1;$i<count($leftLabels);$i++){
     $pdf->Cell(40, $h, $leftLabels[$i], 0, 0, 'L');
     $pdf->SetFont('Arial','',10);
     // For Service Description, use MultiCell to wrap text (assuming a cell width of 50mm)
-    if($leftLabels[$i] == "Service Description:"){
+    if($leftLabels[$i] == "Service Description:" || $leftLabels[$i] == "Business Address:"){
         // Save current X position after label (should be 10+40)
         $x = 10 + 40;
         // Set Y position to current row start
@@ -318,7 +395,7 @@ $sy = $pdf->GetY();
 if (!empty($passengers)) {
     $flightDate   = date('d-M-Y', strtotime($passengers[0]['Departure_date']));
     $flightNumber = $passengers[0]['Flight_number'];  // retrieve Flight No from passenger_details
-    $product      = $data['product'] ?? '';
+    $product      = $isB2BRequest && $b2b_data ? 'Ticket' : ($data['product'] ?? '');
     
     // Set grey font for these details
     $pdf->SetFont('Arial','I',8);
@@ -438,6 +515,7 @@ $pdf->Line($ge,$bottomY,$stampX+35,$bottomY);
 $pdf->SetXY($gs,$bottomY-4);
 $pdf->Cell($gw,8,$label,0,0,'C');
 
-$pdf->Output('I',"invoice_{$data['transaction_id']}.pdf");
+$fileId = ($isB2BRequest && $b2b_data) ? $invoice_number : $data['transaction_id'];
+$pdf->Output('I',"invoice_{$fileId}.pdf");
 exit;
 ?>
