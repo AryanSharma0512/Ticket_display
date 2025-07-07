@@ -27,7 +27,7 @@ $sql     = "SELECT 1 FROM `Yes_Bank_Records` WHERE `Transaction_ID` = '$tx_safe'
 $res     = $conn->query($sql);
 $foundB2C = ($res && $res->num_rows > 0);
 
-$b2b_sql = "SELECT 1 FROM `B2B` WHERE `booking_id` = '$tx_safe' LIMIT 1";
+$b2b_sql = "SELECT 1 FROM `B2B` WHERE `invoice_number` = '$tx_safe' LIMIT 1";
 $b2b_res = $conn->query($b2b_sql);
 $foundB2B = ($b2b_res && $b2b_res->num_rows > 0);
 
