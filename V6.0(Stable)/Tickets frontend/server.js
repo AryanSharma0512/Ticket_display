@@ -10,7 +10,7 @@ const mysql      = require('mysql2');  // Make sure you installed mysql2
 
 const app        = express();
 const port       = 3000;
-const ipAddress  = '192.168.68.111';
+const ipAddress  = '192.168.1.117';
 
 // --------------------- 1) DATABASE CONNECTION ---------------------
 // Primary Flights DB (holds flight_info)

@@ -7,7 +7,7 @@ const path = require('path');
 
 const app = express();
 const port = 3000;
-const ipAddress = '100.69.166.95';
+const ipAddress = '172.20.10.3';
 
 app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded({ extended: true }));

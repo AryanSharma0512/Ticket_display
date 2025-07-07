@@ -4,7 +4,7 @@ const bodyParser = require('body-parser');
 
 const app = express();
 const port = 3002;
-const ipAddress = '100.69.173.223';
+const ipAddress = '192.168.1.130';
 
 app.use(express.static(__dirname));
 app.use(bodyParser.urlencoded({ extended: true }));
