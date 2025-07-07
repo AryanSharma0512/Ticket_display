@@ -621,12 +621,17 @@
       fetch(`check_invoice.php?transaction_id=${encodeURIComponent(tx)}`)
         .then(r => r.json())
         .then(js => {
+          let html = '';
           if (js.found) {
-            outputContainer.innerHTML =
-              `<p>Invoice found — <a href="generate_invoice.php?transaction_id=${tx}" target="_blank">Download PDF</a></p>`;
-          } else {
-            outputContainer.innerHTML = `<p>No invoice found for ID ${tx}.</p>`;
+            html += `<p>Invoice found — <a href="generate_invoice.php?transaction_id=${tx}" target="_blank">Download PDF</a></p>`;
           }
+          if (js.b2b) {
+            html += `<p>B2B Invoice found — <a href="generate_invoice.php?transaction_id=${tx}&b2b=1" target="_blank">Download PDF</a></p>`;
+          }
+          if (!js.found && !js.b2b) {
+            html = `<p>No invoice found for ID ${tx}.</p>`;
+          }
+          outputContainer.innerHTML = html;
         })
         .catch(err => {
           outputContainer.innerHTML = `<p>Error checking invoice: ${err.message}</p>`;
