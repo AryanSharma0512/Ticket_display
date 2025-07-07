@@ -93,6 +93,7 @@ app.post('/update-ticket-info', upload.array('barcodes'), (req, res) => {
     tripId,
     departureDate,
     airlinePNR,
+    separatePnrs,
     baseFare,
     discountsCashbacks,
     taxesFees,
@@ -131,6 +132,9 @@ app.post('/update-ticket-info', upload.array('barcodes'), (req, res) => {
   const isDomesticVal = isDomestic === 'on' ? 1 : 0;
   // Determine date_changed_by: if checkbox is not checked assign 0, else use input (or 0 if empty)
   const dateChangedBy = dateChange === 'on' ? (parseInt(dateChangeNumber, 10) || 0) : 0;
+
+  const pnrInput = airlinePNR;
+  const pnrArray = Array.isArray(pnrInput) ? pnrInput : null;
 
   // Format times so MySQL stores only HH:MM
   const finalDepartureTime = formatTimeToHHMM(departureTime);
@@ -181,11 +185,12 @@ app.post('/update-ticket-info', upload.array('barcodes'), (req, res) => {
     // Generate passenger details rows
     let passengerDetailsHtml = '';
     for (let i = 0; i < numPassengers; i++) {
+      const pnrVal = pnrArray ? (pnrArray[i] || '') : (pnrInput || '');
       passengerDetailsHtml += `
         <tr>
           <td>${passengerNames[i]}</td>
           <td><img src="${barcodes[i] || ''}" alt="Barcode for passenger ${i + 1}" style="width: 100px;"></td>
-          <td>${airlinePNR || ''}</td>
+          <td>${pnrVal}</td>
           <td>${ticketNumbers[i]}</td>
         </tr>
       `;
@@ -287,13 +292,14 @@ app.post('/update-ticket-info', upload.array('barcodes'), (req, res) => {
             PNR = VALUES(PNR),
             Transaction_id = VALUES(Transaction_id)
         `;
+        const pnrDbVal = pnrArray ? JSON.stringify(pnrArray) : (pnrInput || '');
         const pdVals = [
           flightNumber || '',
           namesJson,
           etixJson,
           tripId || '',
           departureDate || '',
-          airlinePNR || '',
+          pnrDbVal,
           transactionId || ''
         ];
 

@@ -352,7 +352,8 @@ foreach($passengers as $p){
     // Decode JSON-encoded passenger names and e-ticket numbers
     $names = json_decode($p['Passenger_names'], true);
     $etickets = json_decode($p['Eticket_numbers'], true);
-    $pnr = $p['PNR'];
+    $pnrRaw = $p['PNR'];
+    $pnrList = json_decode($pnrRaw, true);
     // Ensure we have arrays. If not, make them single-element arrays.
     if(!is_array($names)) {
         $names = [$p['Passenger_names']];
@@ -364,6 +365,7 @@ foreach($passengers as $p){
     for($i = 0; $i < $count; $i++){
         $name = $names[$i];
         $eticket = isset($etickets[$i]) ? $etickets[$i] : '';
+        $pnr = is_array($pnrList) ? ($pnrList[$i] ?? '') : $pnrRaw;
         $pdf->SetXY(10, $y);
         $pdf->Cell($cw[0],6, $name,1,0,'C');
         $pdf->Cell($cw[1],6, $eticket,1,0,'C');
