@@ -1,4 +1,3 @@
-// taxes_db_config.php
 <?php
 // Taxes database connection settings
 $tax_db_servername = "localhost";

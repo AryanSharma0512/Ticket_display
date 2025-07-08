@@ -1,4 +1,5 @@
 <?php
+ob_start();
 require 'fpdf/fpdf.php';
 include 'db_config_taxes.php';
 
@@ -252,5 +253,6 @@ $pdf->SetXY($gs,$bottomY-4);
 $pdf->Cell($gw,8,$label,0,0,'C');
 
 $pdf->Output('I',"b2b_invoice_{$data['invoice_number']}.pdf");
+ob_end_flush();
 exit;
 ?>
