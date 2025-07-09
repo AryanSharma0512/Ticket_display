@@ -53,6 +53,13 @@ function fetchBackendAmountDues() {
                         title: {
                             display: true,
                             text: 'Back End Amount Dues'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return '₹' + new Intl.NumberFormat('en-IN').format(context.parsed.y);
+                                }
+                            }
                         }
                     },
                     scales: {
