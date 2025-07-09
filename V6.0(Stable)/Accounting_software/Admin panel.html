@@ -22,8 +22,6 @@
       <div class="action-box" data-action="incomeStatement" onclick="handleActionFromGrid(this)">Income Statement</div>
       <div class="action-box" data-action="paymentDue" onclick="handleActionFromGrid(this)">Outstanding Payments</div>
       <div class="action-box" data-action="outstandingChart" onclick="handleActionFromGrid(this)">Outstanding by Customer</div>
-      <div class="action-box" data-action="monthlyRevenue" onclick="handleActionFromGrid(this)">Monthly Revenue Trends</div>
-      <div class="action-box" data-action="monthlyProfit" onclick="handleActionFromGrid(this)">Monthly Profit Trends</div>
       <div class="action-box" data-action="revenueProfit" onclick="handleActionFromGrid(this)">Revenue & Profit Trends</div>
       <div class="action-box" data-action="revenueProfitProjection" onclick="handleActionFromGrid(this)">Revenue & Profit Projection</div>
       <div class="action-box" data-action="customerRevenue" onclick="handleActionFromGrid(this)">Customer Contribution</div>
@@ -185,12 +183,6 @@
           case "outstandingChart":
             fetchAndRenderChart("fetch_outstanding_payments.php", "Outstanding Payments by Customer", "bar", "Customer Name", "Outstanding Amount (INR)");
             break;
-          case "monthlyRevenue":
-            fetchAndRenderChart("fetch_monthly_revenue.php", "Monthly Revenue Trends", "line", "Month", "Revenue (INR)");
-            break;
-          case "monthlyProfit":
-            plotMonthlyProfitTrends();
-            break;
           case "revenueProfit":
             plotRevenueProfitTrends();
             break;
@@ -290,12 +282,6 @@
           case "outstandingChart":
             fetchAndRenderChart("fetch_outstanding_payments.php", "Outstanding Payments by Customer", "bar", "Customer Name", "Outstanding Amount (INR)");
             break;
-          case "monthlyRevenue":
-            fetchAndRenderChart("fetch_monthly_revenue.php", "Monthly Revenue Trends", "line", "Month", "Revenue (INR)");
-            break;
-          case "monthlyProfit":
-            plotMonthlyProfitTrends();
-            break;
           case "revenueProfit":
             plotRevenueProfitTrends();
             break;
@@ -361,10 +347,6 @@
         window.location.href = "generate_outstanding_pdf.php";
       } else if (currentAction === "outstandingChart") {
         alert("PDF export for Outstanding Payments by Customer is not available yet.");
-      } else if (currentAction === "monthlyRevenue") {
-        window.location.href = "generate_monthly_revenue_pdf.php";
-      } else if (currentAction === "monthlyProfit") {
-        window.location.href = "generate_monthly_profit_pdf.php";
       } else if (currentAction === "customerRevenue") {
         window.location.href = "generate_customer_revenue_pdf.php";
       } else if (currentAction === "yearToDate") {
@@ -389,8 +371,6 @@
         window.location.href = "generate_outstanding_csv.php";
       } else if (currentAction === "outstandingChart") {
         alert("CSV export for Outstanding Payments by Customer is not available yet.");
-      } else if (currentAction === "monthlyRevenue") {
-        window.location.href = "generate_monthly_revenue_csv.php";
       } else if (currentAction === "customerRevenue") {
         window.location.href = "generate_customer_revenue_csv.php";
       } else if (currentAction === "yearToDate") {
@@ -447,11 +427,16 @@
           let totalOutstanding = 0;
 
           data.forEach(row => {
+            const formattedAmount = new Intl.NumberFormat('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            }).format(row.outstanding_amount);
+
             tableHTML += `
               <tr>
                 <td>${row.customer_id}</td>
                 <td>${row.customer_name}</td>
-                <td>${row.outstanding_amount.toFixed(2)}</td>
+                <td>₹${formattedAmount}</td>
               </tr>
             `;
             totalOutstanding += parseFloat(row.outstanding_amount);
@@ -460,7 +445,10 @@
           tableHTML += `
               <tr>
                 <td colspan="2"><strong>Total Outstanding</strong></td>
-                <td><strong>${totalOutstanding.toFixed(2)}</strong></td>
+                <td><strong>₹${new Intl.NumberFormat('en-IN', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                }).format(totalOutstanding)}</strong></td>
               </tr>
             </table>
           `;
@@ -512,6 +500,13 @@
                 title: {
                   display: true,
                   text: chartTitle
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return '₹' + new Intl.NumberFormat('en-IN').format(context.parsed.y);
+                    }
+                  }
                 }
               },
               scales: {
@@ -551,16 +546,25 @@
 
           const { net_sales, net_profit } = data;
 
+          const formattedSales = new Intl.NumberFormat('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }).format(net_sales);
+          const formattedProfit = new Intl.NumberFormat('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          }).format(net_profit);
+
           outputContainer.innerHTML = `
             <h2>Year-to-Date Performance</h2>
             <table border="1" style="border-collapse: collapse; width: 100%; text-align: left;">
               <tr>
                 <th>Net Sales</th>
-                <td>INR ${net_sales.toFixed(2)}</td>
+                <td>₹${formattedSales}</td>
               </tr>
               <tr>
                 <th>Net Profit</th>
-                <td>INR ${net_profit.toFixed(2)}</td>
+                <td>₹${formattedProfit}</td>
               </tr>
             </table>
           `;
@@ -578,24 +582,29 @@
         .then(response => response.json())
         .then(data => {
           if (data.success) {
+            const nf = new Intl.NumberFormat('en-IN', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+
             const results = `
               <h3>Aggregated Financial Metrics</h3>
               <table class="aggregated-metrics">
                 <tr>
                   <th>Net Sales</th>
-                  <td>${data.net_collectable}</td>
+                  <td>₹${nf.format(data.net_collectable)}</td>
                 </tr>
                 <tr>
                   <th>Net Amount Received</th>
-                  <td>${data.net_amount_received}</td>
+                  <td>₹${nf.format(data.net_amount_received)}</td>
                 </tr>
                 <tr>
                   <th>Total Collection Due</th>
-                  <td>${data.total_collection_due}</td>
+                  <td>₹${nf.format(data.total_collection_due)}</td>
                 </tr>
                 <tr>
                   <th>Total Profit</th>
-                  <td>${data.total_profit}</td>
+                  <td>₹${nf.format(data.total_profit)}</td>
                 </tr>
                 <tr>
                   <th>Net Margin</th>
@@ -642,7 +651,6 @@
 
   <!-- Load external scripts. Ensure they are loaded in order using 'defer' -->
   <script src="customerContributionPieChart.js" defer></script>
-  <script src="monthlyProfitTrends.js" defer></script>
   <script src="revenueProfitTrends.js" defer></script>
   <script src="scenarioRevenueProfitTrends.js" defer></script>
   <script src="transactionTracker.js" defer></script>
