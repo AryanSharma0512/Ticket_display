@@ -41,6 +41,11 @@ if ($fromDate === '' || $toDate === '') {
     die('No transactions found for this account holder');
 }
 
+// Format dates for display (DD-MM-YYYY) without altering originals used in queries
+$fromDateDisplay = date('d-m-Y', strtotime($fromDate));
+$toDateDisplay = date('d-m-Y', strtotime($toDate));
+$openingBalanceDateDisplay = $fromDateDisplay;
+
 $stmt = $conn->prepare("SELECT transaction_id, product_category, amount_used, amount_paid, entry_date, channel FROM acc_network_main WHERE account_holder = ? AND entry_date BETWEEN ? AND ? ORDER BY entry_date ASC");
 $stmt->bind_param('sss', $accountHolder, $fromDate, $toDate);
 $stmt->execute();
@@ -122,7 +127,7 @@ require 'fpdf/fpdf.php';
 
 class PDF extends FPDF {
     function Header() {
-        global $accountHolder, $fromDate, $toDate, $openingBalance, $totalUsed, $totalPaid, $netBalance;
+        global $accountHolder, $fromDateDisplay, $toDateDisplay, $openingBalanceDateDisplay, $openingBalance, $totalUsed, $totalPaid, $netBalance;
         if ($this->PageNo() == 1) {
             $this->SetFillColor(200,200,200);
             $this->SetTextColor(0);
@@ -133,7 +138,7 @@ class PDF extends FPDF {
             $this->SetFont('Arial','B',14);
             $this->Cell(0,8,"Account Statement for $accountHolder",0,1,'L');
             $this->SetFont('Arial','',12);
-            $this->Cell(0,8,"From: $fromDate To: $toDate",0,1,'L');
+            $this->Cell(0,8,"From: $fromDateDisplay To: $toDateDisplay",0,1,'L');
 
             $x = $this->GetX();
             $y = $this->GetY();
@@ -141,16 +146,27 @@ class PDF extends FPDF {
             $h = 10;
             $cellW = $w / 4;
             $this->SetFillColor(245,245,245);
-            $this->Rect($x, $y, $w, $h, 'D');
+            $this->RoundRect($x, $y, $w, $h, 3, 'D');
             $this->SetFont('Arial','',10);
             $labels = [
-                'Opening Balance: '.formatIndian($openingBalance),
+                'Opening Balance (' . $openingBalanceDateDisplay . '): ' . formatIndian($openingBalance),
                 'Total Debit: '.formatIndian($totalUsed),
                 'Total Credit: '.formatIndian($totalPaid),
                 'Net Balance: '.formatIndian($netBalance)
             ];
             for($i=0;$i<4;$i++) {
                 $this->SetXY($x + $i*$cellW, $y);
+                if($i==3) {
+                    $this->SetFont('Arial','B',12);
+                    if($netBalance < 0) {
+                        $this->SetTextColor(40,167,69); // green
+                    } elseif($netBalance > 0) {
+                        $this->SetTextColor(220,53,69); // red
+                    }
+                } else {
+                    $this->SetFont('Arial','',10);
+                    $this->SetTextColor(0);
+                }
                 $this->Cell($cellW, $h, $labels[$i], 0, 0, 'C');
                 if($i<3) {
                     $lineX = $x + ($i+1)*$cellW;
@@ -159,6 +175,7 @@ class PDF extends FPDF {
                     $this->SetDrawColor(0);
                 }
             }
+            $this->SetTextColor(0);
             $this->Ln($h + 4);
         }
 
@@ -179,6 +196,34 @@ class PDF extends FPDF {
         $this->SetFont('Arial','I',8);
         $this->Cell(0,5,'Page '.$this->PageNo(),0,1,'C');
         $this->Cell(0,5,'Note: TXN IDs shown above are the last six digits of the full transaction ID.',0,0,'C');
+    }
+
+    // Helper to draw rounded rectangles for a modern look
+    function RoundRect($x,$y,$w,$h,$r,$style='D'){
+        $k = $this->k; $hp = $this->h;
+        if($style=='F') $op='f';
+        elseif($style=='DF') $op='B';
+        else $op='S';
+        $MyArc = 4/3*(sqrt(2)-1);
+        $this->_out(sprintf('%.2F %.2F m',($x+$r)*$k,($hp-$y)*$k));
+        $this->_out(sprintf('%.2F %.2F l',($x+$w-$r)*$k,($hp-$y)*$k));
+        $xc=$x+$w-$r; $yc=$y+$r;
+        $this->_Arc($xc+$r*$MyArc,$yc-$r,$xc+$r,$yc-$r*$MyArc,$xc+$r,$yc);
+        $this->_out(sprintf('%.2F %.2F l',($x+$w)*$k,($hp-$y-$h+$r)*$k));
+        $xc=$x+$w-$r; $yc=$y+$h-$r;
+        $this->_Arc($xc+$r,$yc+$r*$MyArc,$xc+$r*$MyArc,$yc+$r,$xc,$yc+$r);
+        $this->_out(sprintf('%.2F %.2F l',($x+$r)*$k,($hp-$y-$h)*$k));
+        $xc=$x+$r; $yc=$y+$h-$r;
+        $this->_Arc($xc-$r*$MyArc,$yc+$r,$xc-$r,$yc+$r*$MyArc,$xc-$r,$yc);
+        $this->_out(sprintf('%.2F %.2F l',($x)*$k,($hp-$y-$r)*$k));
+        $xc=$x+$r; $yc=$y+$r;
+        $this->_Arc($xc-$r,$yc-$r*$MyArc,$xc-$r*$MyArc,$yc-$r,$xc,$yc-$r);
+        $this->_out($op);
+    }
+
+    function _Arc($x1,$y1,$x2,$y2,$x3,$y3){
+        $h=$this->h; $k=$this->k;
+        $this->_out(sprintf('%.2F %.2F %.2F %.2F %.2F %.2F c',$x1*$k,($h-$y1)*$k,$x2*$k,($h-$y2)*$k,$x3*$k,($h-$y3)*$k));
     }
 }
 
