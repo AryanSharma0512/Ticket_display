@@ -219,6 +219,42 @@ class PDF extends FPDF {
         $this->Cell(0,5,'Page '.$this->PageNo(),0,1,'C');
         $this->Cell(0,5,'Note: TXN IDs shown above are the last six digits of the full transaction ID.',0,0,'C');
     }
+
+    // Calculate number of lines a text will occupy for a given width
+    function calcLines($w, $txt) {
+        $cw = $this->CurrentFont['cw'];
+        if($w==0)
+            $w = $this->w - $this->rMargin - $this->x;
+        $wmax = ($w - 2*$this->cMargin) * 1000 / $this->FontSize;
+        $s = str_replace("\r", '', (string)$txt);
+        $nb = strlen($s);
+        if($nb>0 && $s[$nb-1]=="\n")
+            $nb--;
+        $sep = -1;
+        $i = 0;
+        $j = 0;
+        $l = 0;
+        $nl = 1;
+        while($i<$nb){
+            $c = $s[$i];
+            if($c=="\n"){
+                $i++; $sep=-1; $j=$i; $l=0; $nl++; continue;
+            }
+            if($c==' ') $sep=$i;
+            $l += isset($cw[$c]) ? $cw[$c] : $this->GetStringWidth($c)*1000;
+            if($l>$wmax){
+                if($sep==-1){
+                    if($i==$j) $i++;
+                }else{
+                    $i = $sep+1;
+                }
+                $sep = -1; $j=$i; $l=0; $nl++;
+            }else{
+                $i++;
+            }
+        }
+        return $nl;
+    }
 }
 
 $pdf = new PDF();
@@ -228,46 +264,12 @@ $pdf->SetFont('Arial','',9);
 $pdf->SetTextColor(0);
 $balance = $openingBalance;
 $index = 1;
-function calcLines($pdf, $w, $txt) {
-    $cw = $pdf->CurrentFont['cw'];
-    if($w==0)
-        $w = $pdf->w - $pdf->rMargin - $pdf->x;
-    $wmax = ($w - 2*$pdf->cMargin) * 1000 / $pdf->FontSize;
-    $s = str_replace("\r", '', (string)$txt);
-    $nb = strlen($s);
-    if($nb>0 && $s[$nb-1]=="\n")
-        $nb--;
-    $sep = -1;
-    $i = 0;
-    $j = 0;
-    $l = 0;
-    $nl = 1;
-    while($i<$nb){
-        $c = $s[$i];
-        if($c=="\n"){
-            $i++; $sep=-1; $j=$i; $l=0; $nl++; continue;
-        }
-        if($c==' ') $sep=$i;
-        $l += $cw[$c];
-        if($l>$wmax){
-            if($sep==-1){
-                if($i==$j) $i++;
-            }else{
-                $i = $sep+1;
-            }
-            $sep = -1; $j=$i; $l=0; $nl++;
-        }else{
-            $i++;
-        }
-    }
-    return $nl;
-}
 
 foreach ($transactions as $tx) {
     $used = (float)$tx['amount_used'];
     $paid = (float)$tx['amount_paid'];
     $balance += $used - $paid;
-    $lines = calcLines($pdf, $widths[7], $tx['channel']);
+    $lines = $pdf->calcLines($widths[7], $tx['channel']);
     $rowH = max(8, $lines * 8);
     $x = $pdf->GetX();
     $y = $pdf->GetY();
