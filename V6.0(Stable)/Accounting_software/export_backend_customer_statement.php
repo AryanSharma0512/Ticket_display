@@ -104,7 +104,7 @@ if ($unsettledOnly && !empty($transactions)) {
 $fromDateFormatted = date('d-m-Y', strtotime($fromDate));
 $toDateFormatted = date('d-m-Y', strtotime($toDate));
 $openingDateFormatted = $fromDateFormatted;
-$widths = [10,26,15,24,28,28,24,122];
+$widths = [10,26,15,30,28,28,24,116];
 
 function formatIndian($num) {
     $negative = $num < 0 ? '-' : '';
@@ -264,15 +264,39 @@ $pdf->SetFont('Arial','',9);
 $pdf->SetTextColor(0);
 $balance = $openingBalance;
 $index = 1;
+$currentMonth = '';
+$monthlyUsed = 0;
+$monthlyPaid = 0;
+$monthlyClosing = $balance;
 
 foreach ($transactions as $tx) {
+    $txMonth = date('F Y', strtotime($tx['entry_date']));
+    if ($currentMonth !== '' && $txMonth !== $currentMonth) {
+        $label = $currentMonth . ' Totals';
+        $pdf->SetFont('Arial','B',9);
+        $pdf->SetFillColor(245,245,245);
+        $pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],8,$label,1,0,'R',true);
+        $pdf->Cell($widths[4],8,formatIndian($monthlyUsed),1,0,'R',true);
+        $pdf->Cell($widths[5],8,formatIndian($monthlyPaid),1,0,'R',true);
+        $pdf->Cell($widths[6],8,formatIndian($monthlyClosing),1,0,'R',true);
+        $pdf->Cell($widths[7],8,'',1,1,'R',true);
+        $pdf->SetFont('Arial','',9);
+        $pdf->SetFillColor(255);
+        $monthlyUsed = 0;
+        $monthlyPaid = 0;
+    }
+    if ($currentMonth === '' || $txMonth !== $currentMonth) {
+        $currentMonth = $txMonth;
+    }
+
     $used = (float)$tx['amount_used'];
     $paid = (float)$tx['amount_paid'];
     $balance += $used - $paid;
+    $monthlyUsed += $used;
+    $monthlyPaid += $paid;
+    $monthlyClosing = $balance;
     $lines = $pdf->calcLines($widths[7], $tx['channel']);
     $rowH = max(8, $lines * 8);
-    $x = $pdf->GetX();
-    $y = $pdf->GetY();
     $pdf->Cell($widths[0], $rowH, $index++, 1, 0, 'C');
     $pdf->Cell($widths[1], $rowH, date('d-m-Y', strtotime($tx['entry_date'])), 1, 0, 'C');
     $pdf->Cell($widths[2], $rowH, substr($tx['transaction_id'], -6), 1, 0, 'L');
@@ -281,7 +305,19 @@ foreach ($transactions as $tx) {
     $pdf->Cell($widths[5], $rowH, formatIndian($paid), 1, 0, 'R');
     $pdf->Cell($widths[6], $rowH, formatIndian($balance), 1, 0, 'R');
     $pdf->MultiCell($widths[7], 8, $tx['channel'], 1, 'L');
-    $pdf->SetXY($x, $y + $rowH);
+}
+
+if ($currentMonth !== '') {
+    $label = $currentMonth . ' Totals';
+    $pdf->SetFont('Arial','B',9);
+    $pdf->SetFillColor(245,245,245);
+    $pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],8,$label,1,0,'R',true);
+    $pdf->Cell($widths[4],8,formatIndian($monthlyUsed),1,0,'R',true);
+    $pdf->Cell($widths[5],8,formatIndian($monthlyPaid),1,0,'R',true);
+    $pdf->Cell($widths[6],8,formatIndian($monthlyClosing),1,0,'R',true);
+    $pdf->Cell($widths[7],8,'',1,1,'R',true);
+    $pdf->SetFont('Arial','',9);
+    $pdf->SetFillColor(255);
 }
 
 $pdf->SetFont('Arial','B',11);
