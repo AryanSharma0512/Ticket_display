@@ -7,10 +7,6 @@ function fetchBackendCustomerStatement() {
         alert('Please enter an Account Holder name.');
         return;
     }
-    if (!fromDate || !toDate) {
-        alert('Please select both From and To dates.');
-        return;
-    }
 
     const outputContainer = document.getElementById('outputContainer');
     outputContainer.innerHTML = '<p>Loading statement...</p>';
@@ -42,20 +38,24 @@ function exportBackendCustomerStatement() {
         alert('Please enter an Account Holder name before exporting.');
         return;
     }
-    if (!fromDate || !toDate) {
-        alert('Please select both From and To dates.');
-        return;
-    }
     window.location.href = `export_backend_customer_statement.php?accountHolder=${encodeURIComponent(name)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}`;
+}
+
+function formatDate(dateStr) {
+    const d = new Date(dateStr);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
 }
 
 function generateBackendTable(data) {
     let running = parseFloat(data.opening_balance);
     let html = `<table class='transaction-table'>` +
                `<thead><tr>` +
-               `<th>#</th><th>Transaction ID</th><th>Category</th>` +
+               `<th>#</th><th>Entry Date</th><th>TXN ID</th><th>Category</th>` +
                `<th>Amount Used (INR)</th><th>Amount Paid (INR)</th>` +
-               `<th>Entry Date</th><th>Balance (INR)</th>` +
+               `<th>Balance (INR)</th>` +
                `</tr></thead><tbody>`;
 
     data.transactions.forEach((tx, idx) => {
@@ -64,11 +64,11 @@ function generateBackendTable(data) {
         running += used - paid;
         html += `<tr>` +
                  `<td>${idx + 1}</td>` +
-                 `<td>${tx.transaction_id}</td>` +
+                 `<td>${formatDate(tx.entry_date)}</td>` +
+                 `<td>${String(tx.transaction_id).slice(-6)}</td>` +
                  `<td>${tx.product_category}</td>` +
                  `<td>${used.toFixed(2)}</td>` +
                  `<td>${paid.toFixed(2)}</td>` +
-                 `<td>${tx.entry_date}</td>` +
                  `<td>${running.toFixed(2)}</td>` +
                  `</tr>`;
     });
@@ -76,10 +76,9 @@ function generateBackendTable(data) {
     const net = running; // running already includes opening balance
     html += `</tbody><tfoot>` +
             `<tr class='total-due'>` +
-            `<td colspan='3'>Totals</td>` +
+            `<td colspan='4'>Totals</td>` +
             `<td>${parseFloat(data.total_used).toFixed(2)}</td>` +
             `<td>${parseFloat(data.total_paid).toFixed(2)}</td>` +
-            `<td></td>` +
             `<td>${net.toFixed(2)}</td>` +
             `</tr></tfoot></table>`;
     return html;
