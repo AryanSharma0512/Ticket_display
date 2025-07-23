@@ -8,6 +8,7 @@ if (!isset($_GET['accountHolder']) || trim($_GET['accountHolder']) === '') {
 $accountHolder = trim($_GET['accountHolder']);
 $fromDate = $_GET['fromDate'] ?? '';
 $toDate = $_GET['toDate'] ?? '';
+$unsettledOnly = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == '1';
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
@@ -72,6 +73,34 @@ if ($row = $balRes->fetch_assoc()) {
 }
 $stmt->close();
 $netBalance = $openingBalance + $totalUsed - $totalPaid;
+
+if ($unsettledOnly && !empty($transactions)) {
+    $running = $openingBalance;
+    $lastSettled = -1;
+    foreach ($transactions as $idx => $tx) {
+        $running += (float)$tx['amount_used'] - (float)$tx['amount_paid'];
+        if (abs($running) < 0.01) {
+            $lastSettled = $idx;
+        }
+    }
+    if ($lastSettled === count($transactions) - 1) {
+        $transactions = [];
+        $totalUsed = 0;
+        $totalPaid = 0;
+        $openingBalance = 0;
+        $netBalance = 0;
+    } else {
+        $transactions = array_slice($transactions, $lastSettled + 1);
+        $totalUsed = 0;
+        $totalPaid = 0;
+        foreach ($transactions as $row) {
+            $totalUsed += (float)$row['amount_used'];
+            $totalPaid += (float)$row['amount_paid'];
+        }
+        $openingBalance = 0;
+        $netBalance = $totalUsed - $totalPaid;
+    }
+}
 $widths = [10,30,30,60,50,50,47];
 
 require 'fpdf/fpdf.php';

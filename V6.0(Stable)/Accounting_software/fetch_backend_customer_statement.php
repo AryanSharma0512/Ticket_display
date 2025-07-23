@@ -8,6 +8,7 @@ if (!isset($_POST['accountHolder']) || trim($_POST['accountHolder']) === '') {
 $accountHolder = trim($_POST['accountHolder']);
 $fromDate = $_POST['fromDate'] ?? '';
 $toDate = $_POST['toDate'] ?? '';
+$unsettledOnly = isset($_POST['unsettledOnly']) && $_POST['unsettledOnly'] == '1';
 
 require_once __DIR__ . '/db_config_acc.php';
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -72,6 +73,34 @@ if ($row = $balRes->fetch_assoc()) {
 }
 $stmt->close();
 $netBalance = $openingBalance + $totals['total_used'] - $totals['total_paid'];
+
+if ($unsettledOnly && !empty($transactions)) {
+    $running = $openingBalance;
+    $lastSettled = -1;
+    foreach ($transactions as $idx => $tx) {
+        $running += (float)$tx['amount_used'] - (float)$tx['amount_paid'];
+        if (abs($running) < 0.01) {
+            $lastSettled = $idx;
+        }
+    }
+    if ($lastSettled === count($transactions) - 1) {
+        $transactions = [];
+        $totals['total_used'] = 0;
+        $totals['total_paid'] = 0;
+        $openingBalance = 0;
+        $netBalance = 0;
+    } else {
+        $transactions = array_slice($transactions, $lastSettled + 1);
+        $totals['total_used'] = 0;
+        $totals['total_paid'] = 0;
+        foreach ($transactions as $row) {
+            $totals['total_used'] += (float)$row['amount_used'];
+            $totals['total_paid'] += (float)$row['amount_paid'];
+        }
+        $openingBalance = 0;
+        $netBalance = $totals['total_used'] - $totals['total_paid'];
+    }
+}
 $conn->close();
 
 echo json_encode([

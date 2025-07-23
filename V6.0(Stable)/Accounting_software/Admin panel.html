@@ -66,7 +66,7 @@
     <button type="button" onclick="trackThreadedTransaction()">Search</button>
   </div>
 
-  <div id="customerStatementContainer" style="display: none;">
+  <div id="customerStatementContainer" class="statement-section" style="display: none;">
     <label for="customerID">Enter Customer ID:</label>
     <input type="text" id="customerID" name="customerID" required>
     <div>
@@ -74,11 +74,13 @@
       <input type="checkbox" id="unsettledOnly" name="unsettledOnly" onchange="updateUnsettledValue()">
       <label for="unsettledOnly">View unsettled transactions only</label>
     </div>
-    <button type="button" onclick="fetchCustomerStatement()">Generate Statement</button>
-    <button id="exportPdfCustomer" class="button" onclick="exportCustomerStatement()" style="display: none;">Export as PDF</button>
+    <div class="button-row">
+      <button type="button" class="button generate-button" onclick="fetchCustomerStatement()">Generate Statement</button>
+      <button id="exportPdfCustomer" class="button" onclick="exportCustomerStatement()" style="display: none;">Export as PDF</button>
+    </div>
   </div>
 
-  <div id="backendCustomerStatementContainer" style="display: none;">
+  <div id="backendCustomerStatementContainer" class="statement-section" style="display: none;">
     <label for="backendAccountHolder">Enter Account Holder:</label>
     <input type="text" id="backendAccountHolder" name="backendAccountHolder" required>
     <br>
@@ -86,9 +88,15 @@
     <input type="date" id="backendFromDate" name="backendFromDate" required>
     <label for="backendToDate">To Date:</label>
     <input type="date" id="backendToDate" name="backendToDate" required>
-    <br>
-    <button type="button" onclick="fetchBackendCustomerStatement()">Generate Statement</button>
-    <button id="exportPdfBackendCustomer" class="button" onclick="exportBackendCustomerStatement()" style="display: none;">Export as PDF</button>
+    <div>
+      <input type="hidden" id="backendUnsettledHidden" name="backendUnsettled" value="0">
+      <input type="checkbox" id="backendUnsettledOnly" name="backendUnsettled" onchange="updateBackendUnsettledValue()">
+      <label for="backendUnsettledOnly">View Unsettled Only</label>
+    </div>
+    <div class="button-row">
+      <button type="button" class="button generate-button" onclick="fetchBackendCustomerStatement()">Generate Statement</button>
+      <button id="exportPdfBackendCustomer" class="button" onclick="exportBackendCustomerStatement()" style="display: none;">Export as PDF</button>
+    </div>
   </div>
 
   <div id="customerCreditContainer" style="display: none;">

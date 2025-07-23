@@ -1,8 +1,15 @@
 // Fetch and display back-end customer statement
+function updateBackendUnsettledValue() {
+    const cb = document.getElementById('backendUnsettledOnly');
+    const hidden = document.getElementById('backendUnsettledHidden');
+    hidden.value = cb.checked ? '1' : '0';
+}
+
 function fetchBackendCustomerStatement() {
     const name = document.getElementById('backendAccountHolder').value.trim();
     const fromDate = document.getElementById('backendFromDate').value;
     const toDate = document.getElementById('backendToDate').value;
+    const unsettled = document.getElementById('backendUnsettledHidden').value;
     if (!name) {
         alert('Please enter an Account Holder name.');
         return;
@@ -14,7 +21,7 @@ function fetchBackendCustomerStatement() {
     fetch('fetch_backend_customer_statement.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `accountHolder=${encodeURIComponent(name)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}`
+        body: `accountHolder=${encodeURIComponent(name)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&unsettledOnly=${unsettled}`
     })
     .then(resp => resp.json())
     .then(data => {
@@ -34,11 +41,12 @@ function exportBackendCustomerStatement() {
     const name = document.getElementById('backendAccountHolder').value.trim();
     const fromDate = document.getElementById('backendFromDate').value;
     const toDate = document.getElementById('backendToDate').value;
+    const unsettled = document.getElementById('backendUnsettledHidden').value;
     if (!name) {
         alert('Please enter an Account Holder name before exporting.');
         return;
     }
-    window.location.href = `export_backend_customer_statement.php?accountHolder=${encodeURIComponent(name)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}`;
+    window.location.href = `export_backend_customer_statement.php?accountHolder=${encodeURIComponent(name)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&unsettledOnly=${unsettled}`;
 }
 
 function formatDate(dateStr) {
@@ -86,3 +94,4 @@ function generateBackendTable(data) {
 
 window.fetchBackendCustomerStatement = fetchBackendCustomerStatement;
 window.exportBackendCustomerStatement = exportBackendCustomerStatement;
+window.updateBackendUnsettledValue = updateBackendUnsettledValue;
