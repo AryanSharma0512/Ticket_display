@@ -8,15 +8,39 @@ if (!isset($_POST['accountHolder']) || trim($_POST['accountHolder']) === '') {
 $accountHolder = trim($_POST['accountHolder']);
 $fromDate = $_POST['fromDate'] ?? '';
 $toDate = $_POST['toDate'] ?? '';
-if ($fromDate === '' || $toDate === '') {
-    echo json_encode(['error' => 'Date range required']);
-    exit;
-}
 
 require_once __DIR__ . '/db_config_acc.php';
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     echo json_encode(['error' => 'Database connection failed']);
+    exit;
+}
+
+if ($fromDate === '') {
+    $stmt = $conn->prepare("SELECT entry_date FROM acc_network_main WHERE account_holder = ? ORDER BY entry_date ASC LIMIT 1");
+    $stmt->bind_param('s', $accountHolder);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $fromDate = $row['entry_date'];
+    }
+    $stmt->close();
+}
+
+if ($toDate === '') {
+    $stmt = $conn->prepare("SELECT entry_date FROM acc_network_main WHERE account_holder = ? ORDER BY entry_date DESC LIMIT 1");
+    $stmt->bind_param('s', $accountHolder);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $toDate = $row['entry_date'];
+    }
+    $stmt->close();
+}
+
+if ($fromDate === '' || $toDate === '') {
+    echo json_encode(['error' => 'No transactions found for this account holder']);
+    $conn->close();
     exit;
 }
 
