@@ -1,8 +1,14 @@
 // Fetch and display back-end customer statement
 function fetchBackendCustomerStatement() {
     const name = document.getElementById('backendAccountHolder').value.trim();
+    const fromDate = document.getElementById('backendFromDate').value;
+    const toDate = document.getElementById('backendToDate').value;
     if (!name) {
         alert('Please enter an Account Holder name.');
+        return;
+    }
+    if (!fromDate || !toDate) {
+        alert('Please select both From and To dates.');
         return;
     }
 
@@ -12,7 +18,7 @@ function fetchBackendCustomerStatement() {
     fetch('fetch_backend_customer_statement.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `accountHolder=${encodeURIComponent(name)}`
+        body: `accountHolder=${encodeURIComponent(name)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}`
     })
     .then(resp => resp.json())
     .then(data => {
@@ -30,15 +36,21 @@ function fetchBackendCustomerStatement() {
 
 function exportBackendCustomerStatement() {
     const name = document.getElementById('backendAccountHolder').value.trim();
+    const fromDate = document.getElementById('backendFromDate').value;
+    const toDate = document.getElementById('backendToDate').value;
     if (!name) {
         alert('Please enter an Account Holder name before exporting.');
         return;
     }
-    window.location.href = `export_backend_customer_statement.php?accountHolder=${encodeURIComponent(name)}`;
+    if (!fromDate || !toDate) {
+        alert('Please select both From and To dates.');
+        return;
+    }
+    window.location.href = `export_backend_customer_statement.php?accountHolder=${encodeURIComponent(name)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}`;
 }
 
 function generateBackendTable(data) {
-    let running = 0;
+    let running = parseFloat(data.opening_balance);
     let html = `<table class='transaction-table'>` +
                `<thead><tr>` +
                `<th>#</th><th>Transaction ID</th><th>Category</th>` +
@@ -61,13 +73,14 @@ function generateBackendTable(data) {
                  `</tr>`;
     });
 
+    const net = running; // running already includes opening balance
     html += `</tbody><tfoot>` +
             `<tr class='total-due'>` +
             `<td colspan='3'>Totals</td>` +
             `<td>${parseFloat(data.total_used).toFixed(2)}</td>` +
             `<td>${parseFloat(data.total_paid).toFixed(2)}</td>` +
             `<td></td>` +
-            `<td>${(parseFloat(data.total_used) - parseFloat(data.total_paid)).toFixed(2)}</td>` +
+            `<td>${net.toFixed(2)}</td>` +
             `</tr></tfoot></table>`;
     return html;
 }
