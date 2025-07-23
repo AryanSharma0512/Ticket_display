@@ -41,7 +41,7 @@ if ($fromDate === '' || $toDate === '') {
     die('No transactions found for this account holder');
 }
 
-$stmt = $conn->prepare("SELECT transaction_id, product_category, amount_used, amount_paid, entry_date FROM acc_network_main WHERE account_holder = ? AND entry_date BETWEEN ? AND ? ORDER BY entry_date ASC");
+$stmt = $conn->prepare("SELECT transaction_id, product_category, amount_used, amount_paid, entry_date, channel FROM acc_network_main WHERE account_holder = ? AND entry_date BETWEEN ? AND ? ORDER BY entry_date ASC");
 $stmt->bind_param('sss', $accountHolder, $fromDate, $toDate);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -101,7 +101,22 @@ if ($unsettledOnly && !empty($transactions)) {
         $netBalance = $totalUsed - $totalPaid;
     }
 }
-$widths = [10,30,30,60,50,50,47];
+$widths = [10,26,15,24,28,28,24,122];
+
+function formatIndian($num) {
+    $negative = $num < 0 ? '-' : '';
+    $num = abs($num);
+    $parts = explode('.', number_format($num, 2, '.', ''));
+    $int = $parts[0];
+    $dec = $parts[1];
+    $last3 = substr($int, -3);
+    $rest = substr($int, 0, -3);
+    if ($rest !== '') {
+        $rest = preg_replace('/\B(?=(\d{2})+(?!\d))/', ',', $rest);
+        $int = $rest . ',' . $last3;
+    }
+    return $negative . $int . '.' . $dec;
+}
 
 require 'fpdf/fpdf.php';
 
@@ -123,24 +138,35 @@ class PDF extends FPDF {
             $x = $this->GetX();
             $y = $this->GetY();
             $w = $this->w - 20;
-            $h = 28;
+            $h = 10;
+            $cellW = $w / 4;
             $this->SetFillColor(245,245,245);
             $this->Rect($x, $y, $w, $h, 'D');
-            $this->SetXY($x+2, $y+2);
             $this->SetFont('Arial','',10);
-            $this->Cell(0,6,"Opening Balance on $fromDate: ".number_format($openingBalance,2),0,1);
-            $this->Cell(0,6,"Total Debit: ".number_format($totalUsed,2),0,1);
-            $this->Cell(0,6,"Total Credit: ".number_format($totalPaid,2),0,1);
-            $msg = $netBalance >= 0 ? "You owe $accountHolder" : "$accountHolder has deposited balance";
-            $this->Cell(0,6,"Net Balance: ".number_format($netBalance,2)." - $msg",0,1);
-            $this->Ln(2);
+            $labels = [
+                'Opening Balance: '.formatIndian($openingBalance),
+                'Total Debit: '.formatIndian($totalUsed),
+                'Total Credit: '.formatIndian($totalPaid),
+                'Net Balance: '.formatIndian($netBalance)
+            ];
+            for($i=0;$i<4;$i++) {
+                $this->SetXY($x + $i*$cellW, $y);
+                $this->Cell($cellW, $h, $labels[$i], 0, 0, 'C');
+                if($i<3) {
+                    $lineX = $x + ($i+1)*$cellW;
+                    $this->SetDrawColor(211,211,211);
+                    $this->Line($lineX, $y+2, $lineX, $y+$h-2);
+                    $this->SetDrawColor(0);
+                }
+            }
+            $this->Ln($h + 4);
         }
 
         global $widths;
         $this->SetFont('Arial','B',9);
         $this->SetFillColor(0,102,204);
         $this->SetTextColor(255);
-        $headers = ['#','Entry Date','TXN ID','Category','Amount Used (INR)','Amount Paid (INR)','Balance (INR)'];
+        $headers = ['#','Entry Date','TXN ID','Category','Amount Used','Amount Paid','Balance','Remark'];
         foreach ($headers as $i => $h) {
             $this->Cell($widths[$i],8,$h,1,0,'C',true);
         }
@@ -163,26 +189,67 @@ $pdf->SetFont('Arial','',9);
 $pdf->SetTextColor(0);
 $balance = $openingBalance;
 $index = 1;
+function calcLines($pdf, $w, $txt) {
+    $cw = $pdf->CurrentFont['cw'];
+    if($w==0)
+        $w = $pdf->w - $pdf->rMargin - $pdf->x;
+    $wmax = ($w - 2*$pdf->cMargin) * 1000 / $pdf->FontSize;
+    $s = str_replace("\r", '', (string)$txt);
+    $nb = strlen($s);
+    if($nb>0 && $s[$nb-1]=="\n")
+        $nb--;
+    $sep = -1;
+    $i = 0;
+    $j = 0;
+    $l = 0;
+    $nl = 1;
+    while($i<$nb){
+        $c = $s[$i];
+        if($c=="\n"){
+            $i++; $sep=-1; $j=$i; $l=0; $nl++; continue;
+        }
+        if($c==' ') $sep=$i;
+        $l += $cw[$c];
+        if($l>$wmax){
+            if($sep==-1){
+                if($i==$j) $i++;
+            }else{
+                $i = $sep+1;
+            }
+            $sep = -1; $j=$i; $l=0; $nl++;
+        }else{
+            $i++;
+        }
+    }
+    return $nl;
+}
+
 foreach ($transactions as $tx) {
     $used = (float)$tx['amount_used'];
     $paid = (float)$tx['amount_paid'];
     $balance += $used - $paid;
-    $pdf->Cell($widths[0],8,$index++,1,0,'C');
-    $pdf->Cell($widths[1],8,date('d-m-Y', strtotime($tx['entry_date'])),1,0,'C');
-    $pdf->Cell($widths[2],8,substr($tx['transaction_id'], -6),1,0,'L');
-    $pdf->Cell($widths[3],8,$tx['product_category'],1,0,'L');
-    $pdf->Cell($widths[4],8,number_format($used,2),1,0,'R');
-    $pdf->Cell($widths[5],8,number_format($paid,2),1,0,'R');
-    $pdf->Cell($widths[6],8,number_format($balance,2),1,0,'R');
-    $pdf->Ln();
+    $lines = calcLines($pdf, $widths[7], $tx['channel']);
+    $rowH = max(8, $lines * 8);
+    $x = $pdf->GetX();
+    $y = $pdf->GetY();
+    $pdf->Cell($widths[0], $rowH, $index++, 1, 0, 'C');
+    $pdf->Cell($widths[1], $rowH, date('d-m-Y', strtotime($tx['entry_date'])), 1, 0, 'C');
+    $pdf->Cell($widths[2], $rowH, substr($tx['transaction_id'], -6), 1, 0, 'L');
+    $pdf->Cell($widths[3], $rowH, $tx['product_category'], 1, 0, 'L');
+    $pdf->Cell($widths[4], $rowH, formatIndian($used), 1, 0, 'R');
+    $pdf->Cell($widths[5], $rowH, formatIndian($paid), 1, 0, 'R');
+    $pdf->Cell($widths[6], $rowH, formatIndian($balance), 1, 0, 'R');
+    $pdf->MultiCell($widths[7], 8, $tx['channel'], 1, 'L');
+    $pdf->SetXY($x, $y + $rowH);
 }
 
 $pdf->SetFont('Arial','B',11);
 $pdf->SetFillColor(255,204,0);
 $pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],10,'Totals',1,0,'R',true);
-$pdf->Cell($widths[4],10,number_format($totalUsed,2),1,0,'R',true);
-$pdf->Cell($widths[5],10,number_format($totalPaid,2),1,0,'R',true);
-$pdf->Cell($widths[6],10,number_format($netBalance,2),1,1,'R',true);
+$pdf->Cell($widths[4],10,formatIndian($totalUsed),1,0,'R',true);
+$pdf->Cell($widths[5],10,formatIndian($totalPaid),1,0,'R',true);
+$pdf->Cell($widths[6],10,formatIndian($netBalance),1,0,'R',true);
+$pdf->Cell($widths[7],10,'',1,1,'R',true);
 
 header('Content-Type: application/pdf');
 header('Content-Disposition: attachment; filename="Backend_Customer_Statement.pdf"');
