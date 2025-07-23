@@ -88,6 +88,32 @@ body {
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
+/* Container for statement sections */
+.statement-section {
+    background-color: #f3e8ff; /* light purplish tint */
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: 8px;
+}
+
+/* Row layout for Generate/Export buttons */
+.button-row {
+    display: flex;
+    gap: 10px; /* horizontal spacing */
+    margin-top: 10px; /* vertical padding from inputs */
+    align-items: center;
+}
+
+/* Yellow styled generate button */
+.generate-button {
+    background-color: #ffd700;
+    color: #333;
+}
+
+.generate-button:hover {
+    background-color: #e6c200;
+}
+
 /* Output area styling */
 .centered {
     font-size: 1rem;
