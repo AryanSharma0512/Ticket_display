@@ -166,30 +166,38 @@ class PDF extends FPDF {
             $x = $this->GetX();
             $y = $this->GetY();
             $w = $this->w - 20;
-            $h = 10;
+            $h = 14;
             $cellW = $w / 4;
             $this->SetFillColor(245,245,245);
             $this->RoundRect($x, $y, $w, $h, 3, 'D');
             $this->SetFont('Arial','',10);
-            $labels = [
-                'Opening Balance ('.$openingDateFormatted.'): '.formatIndian($openingBalance),
-                'Total Debit: '.formatIndian($totalUsed),
-                'Total Credit: '.formatIndian($totalPaid),
-            ];
             for($i=0;$i<4;$i++) {
-                $this->SetXY($x + $i*$cellW, $y);
-                if($i==3){
+                $this->SetXY($x + $i*$cellW, $y+2);
+                if($i==0){
+                    $this->Cell($cellW,5,'Opening Balance: '.formatIndian($openingBalance),0,2,'C');
+                    $this->SetFont('Arial','',8);
+                    $this->SetTextColor(128,128,128);
+                    $this->Cell($cellW,4,'on '.$openingDateFormatted,0,0,'C');
+                    $this->SetFont('Arial','',10);
+                    $this->SetTextColor(0);
+                }elseif($i==1){
+                    $this->Cell($cellW,$h-4,'Total Debit: '.formatIndian($totalUsed),0,0,'C');
+                }elseif($i==2){
+                    $this->Cell($cellW,$h-4,'Total Credit: '.formatIndian($totalPaid),0,0,'C');
+                }else{
                     $this->SetFont('Arial','B',12);
                     if($netBalance < 0){
                         $this->SetTextColor(0,128,0);
                     }else{
                         $this->SetTextColor(220,0,0);
                     }
-                    $this->Cell($cellW, $h, 'Net Balance: '.formatIndian($netBalance), 0, 0, 'C');
+                    $remark = ($netBalance < 0) ? "$accountHolder has money deposited with you" : "Aryan owes $accountHolder";
+                    $this->Cell($cellW,5,'Net Balance: '.formatIndian($netBalance),0,2,'C');
+                    $this->SetFont('Arial','',8);
+                    $this->SetTextColor(128,128,128);
+                    $this->Cell($cellW,4,$remark,0,0,'C');
                     $this->SetTextColor(0);
                     $this->SetFont('Arial','',10);
-                }else{
-                    $this->Cell($cellW, $h, $labels[$i], 0, 0, 'C');
                 }
                 if($i<3) {
                     $lineX = $x + ($i+1)*$cellW;
