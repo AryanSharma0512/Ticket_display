@@ -101,6 +101,9 @@ if ($unsettledOnly && !empty($transactions)) {
         $netBalance = $totalUsed - $totalPaid;
     }
 }
+$fromDateFormatted = date('d-m-Y', strtotime($fromDate));
+$toDateFormatted = date('d-m-Y', strtotime($toDate));
+$openingDateFormatted = $fromDateFormatted;
 $widths = [10,26,15,24,28,28,24,122];
 
 function formatIndian($num) {
@@ -121,8 +124,33 @@ function formatIndian($num) {
 require 'fpdf/fpdf.php';
 
 class PDF extends FPDF {
+    function RoundRect($x,$y,$w,$h,$r,$style='D') {
+        $k=$this->k; $hp=$this->h;
+        if($style=='F') $op='f';
+        elseif($style=='DF') $op='B';
+        else $op='S';
+        $MyArc=4/3*(sqrt(2)-1);
+        $this->_out(sprintf('%.2F %.2F m',($x+$r)*$k,($hp-$y)*$k));
+        $this->_out(sprintf('%.2F %.2F l',($x+$w-$r)*$k,($hp-$y)*$k));
+        $xc=$x+$w-$r; $yc=$y+$r;
+        $this->_Arc($xc+$r*$MyArc,$yc-$r,$xc+$r,$yc-$r*$MyArc,$xc+$r,$yc);
+        $this->_out(sprintf('%.2F %.2F l',($x+$w)*$k,($hp-$y-$h+$r)*$k));
+        $xc=$x+$w-$r; $yc=$y+$h-$r;
+        $this->_Arc($xc+$r,$yc+$r*$MyArc,$xc+$r*$MyArc,$yc+$r,$xc,$yc+$r);
+        $this->_out(sprintf('%.2F %.2F l',($x+$r)*$k,($hp-$y-$h)*$k));
+        $xc=$x+$r; $yc=$y+$h-$r;
+        $this->_Arc($xc-$r*$MyArc,$yc+$r,$xc-$r,$yc+$r*$MyArc,$xc-$r,$yc);
+        $this->_out(sprintf('%.2F %.2F l',($x)*$k,($hp-$y-$r)*$k));
+        $xc=$x+$r; $yc=$y+$r;
+        $this->_Arc($xc-$r,$yc-$r*$MyArc,$xc-$r*$MyArc,$yc-$r,$xc,$yc-$r);
+        $this->_out($op);
+    }
+    function _Arc($x1,$y1,$x2,$y2,$x3,$y3) {
+        $h=$this->h; $k=$this->k;
+        $this->_out(sprintf('%.2F %.2F %.2F %.2F %.2F %.2F c',$x1*$k,($h-$y1)*$k,$x2*$k,($h-$y2)*$k,$x3*$k,($h-$y3)*$k));
+    }
     function Header() {
-        global $accountHolder, $fromDate, $toDate, $openingBalance, $totalUsed, $totalPaid, $netBalance;
+        global $accountHolder, $fromDateFormatted, $toDateFormatted, $openingBalance, $totalUsed, $totalPaid, $netBalance, $openingDateFormatted;
         if ($this->PageNo() == 1) {
             $this->SetFillColor(200,200,200);
             $this->SetTextColor(0);
@@ -133,7 +161,7 @@ class PDF extends FPDF {
             $this->SetFont('Arial','B',14);
             $this->Cell(0,8,"Account Statement for $accountHolder",0,1,'L');
             $this->SetFont('Arial','',12);
-            $this->Cell(0,8,"From: $fromDate To: $toDate",0,1,'L');
+            $this->Cell(0,8,"From: $fromDateFormatted To: $toDateFormatted",0,1,'L');
 
             $x = $this->GetX();
             $y = $this->GetY();
@@ -141,17 +169,28 @@ class PDF extends FPDF {
             $h = 10;
             $cellW = $w / 4;
             $this->SetFillColor(245,245,245);
-            $this->Rect($x, $y, $w, $h, 'D');
+            $this->RoundRect($x, $y, $w, $h, 3, 'D');
             $this->SetFont('Arial','',10);
             $labels = [
-                'Opening Balance: '.formatIndian($openingBalance),
+                'Opening Balance ('.$openingDateFormatted.'): '.formatIndian($openingBalance),
                 'Total Debit: '.formatIndian($totalUsed),
                 'Total Credit: '.formatIndian($totalPaid),
-                'Net Balance: '.formatIndian($netBalance)
             ];
             for($i=0;$i<4;$i++) {
                 $this->SetXY($x + $i*$cellW, $y);
-                $this->Cell($cellW, $h, $labels[$i], 0, 0, 'C');
+                if($i==3){
+                    $this->SetFont('Arial','B',12);
+                    if($netBalance < 0){
+                        $this->SetTextColor(0,128,0);
+                    }else{
+                        $this->SetTextColor(220,0,0);
+                    }
+                    $this->Cell($cellW, $h, 'Net Balance: '.formatIndian($netBalance), 0, 0, 'C');
+                    $this->SetTextColor(0);
+                    $this->SetFont('Arial','',10);
+                }else{
+                    $this->Cell($cellW, $h, $labels[$i], 0, 0, 'C');
+                }
                 if($i<3) {
                     $lineX = $x + ($i+1)*$cellW;
                     $this->SetDrawColor(211,211,211);
