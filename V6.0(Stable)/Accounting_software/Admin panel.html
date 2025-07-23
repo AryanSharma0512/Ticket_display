@@ -28,6 +28,7 @@
       <div class="action-box" data-action="yearToDate" onclick="handleActionFromGrid(this)">Year-to-Date Performance</div>
       <div class="action-box" data-action="universalAggregates" onclick="handleActionFromGrid(this)">Universal Aggregated Fields</div>
       <div class="action-box" data-action="backendAmountDues" onclick="handleActionFromGrid(this)">Back End Amount Dues</div>
+      <div class="action-box" data-action="backendCustomerStatement" onclick="handleActionFromGrid(this)">Back-end Customer Statement</div>
       <div class="action-box" data-action="transactionIDTracker" onclick="handleActionFromGrid(this)">Transaction ID Tracker</div>
       <div class="action-box" data-action="eventIDTracker" onclick="handleActionFromGrid(this)">Event ID Tracker</div>
       <div class="action-box" data-action="threadedTransactions" onclick="handleActionFromGrid(this)">Threaded Transactions</div>
@@ -75,6 +76,13 @@
     </div>
     <button type="button" onclick="fetchCustomerStatement()">Generate Statement</button>
     <button id="exportPdfCustomer" class="button" onclick="exportCustomerStatement()" style="display: none;">Export as PDF</button>
+  </div>
+
+  <div id="backendCustomerStatementContainer" style="display: none;">
+    <label for="backendAccountHolder">Enter Account Holder:</label>
+    <input type="text" id="backendAccountHolder" name="backendAccountHolder" required>
+    <button type="button" onclick="fetchBackendCustomerStatement()">Generate Statement</button>
+    <button id="exportPdfBackendCustomer" class="button" onclick="exportBackendCustomerStatement()" style="display: none;">Export as PDF</button>
   </div>
 
   <div id="customerCreditContainer" style="display: none;">
@@ -151,6 +159,7 @@
         const eventTracker = document.getElementById("eventTracker");
         const threadedTransactionTracker = document.getElementById("threadedTransactionTracker");
         const customerStatementContainer = document.getElementById("customerStatementContainer");
+        const backendCustomerStatementContainer = document.getElementById("backendCustomerStatementContainer");
         const customerCreditContainer = document.getElementById("customerCreditContainer");
         const goalSeekerSection = document.getElementById("goalSeekerSection");
         const invoiceContainer = document.getElementById("invoiceContainer");
@@ -164,6 +173,7 @@
         eventTracker.style.display = "none";
         threadedTransactionTracker.style.display = "none";
         customerStatementContainer.style.display = "none";
+        backendCustomerStatementContainer.style.display = "none";
         customerCreditContainer.style.display = "none";
         goalSeekerSection.style.display = "none";
         invoiceContainer.style.display = "none";
@@ -219,6 +229,9 @@
           case "customerStatement":
             customerStatementContainer.style.display = "block";
             break;
+          case "backendCustomerStatement":
+            backendCustomerStatementContainer.style.display = "block";
+            break;
           case "customerCreditScore":
             customerCreditContainer.style.display = "block";
             outputContainer.innerHTML = 'Please enter a Customer ID and press "Calculate Credit Score".';
@@ -253,6 +266,7 @@
         const eventTracker = document.getElementById("eventTracker");
         const threadedTransactionTracker = document.getElementById("threadedTransactionTracker");
         const customerStatementContainer = document.getElementById("customerStatementContainer");
+        const backendCustomerStatementContainer = document.getElementById("backendCustomerStatementContainer");
         const customerCreditContainer = document.getElementById("customerCreditContainer");
         const goalSeekerSection = document.getElementById("goalSeekerSection");
         const invoiceContainer = document.getElementById("invoiceContainer");
@@ -265,9 +279,10 @@
         eventTracker.style.display = "none";
         threadedTransactionTracker.style.display = "none";
         customerStatementContainer.style.display = "none";
+        backendCustomerStatementContainer.style.display = "none";
         customerCreditContainer.style.display = "none";
         goalSeekerSection.style.display = "none";
-        invoiceContainer.style.display = "none"; 
+        invoiceContainer.style.display = "none";
 
         // Remove any special sizing class.
         chartContainer.classList.remove("small-chart");
@@ -319,6 +334,9 @@
           case "customerStatement":
             customerStatementContainer.style.display = "block";
             break;
+          case "backendCustomerStatement":
+            backendCustomerStatementContainer.style.display = "block";
+            break;
           case "customerCreditScore":
             customerCreditContainer.style.display = "block";
             outputContainer.innerHTML = 'Please enter a Customer ID and press "Calculate Credit Score".';
@@ -358,6 +376,13 @@
           return;
         }
         window.location.href = `export_customer_statement.php?customerID=${encodeURIComponent(customerID)}`;
+      } else if (currentAction === "backendCustomerStatement") {
+        const accHolder = document.getElementById('backendAccountHolder').value;
+        if (!accHolder) {
+          alert("Please enter an Account Holder name to export the statement.");
+          return;
+        }
+        window.location.href = `export_backend_customer_statement.php?accountHolder=${encodeURIComponent(accHolder)}`;
       } else {
         alert("Please select a valid action to export.");
       }
@@ -658,6 +683,7 @@
   <script src="handleTransactions.js" defer></script>
   <script src="fetchBackendAmountDues.js" defer></script>
   <script src="threadedTransactionTracker.js" defer></script>
+  <script src="backendCustomerStatement.js" defer></script>
   <script src="customerStatement.js" defer></script>
   <script src="fetchLastTenTransactions.js" defer></script>
   <script src="customerCreditScore.js" defer></script>
