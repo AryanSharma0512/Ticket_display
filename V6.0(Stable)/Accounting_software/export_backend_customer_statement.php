@@ -195,8 +195,8 @@ class PDF extends FPDF {
                     }
                     // Display the correct relationship between Aryan and the customer
                     $remark = ($netBalance < 0)
-                        ? 'ARYAN has money deposited with '.$accountHolder
-                        : 'ARYAN owes money to '.$accountHolder;
+                        ? 'Aryan has money deposited with '.$accountHolder
+                        : 'Aryan owes money to '.$accountHolder;
                     $this->SetXY($x + $i*$cellW, $y+4);
                     $this->Cell($cellW,5,'Net Balance: '.formatIndian($netBalance),0,2,'C');
                     $this->SetFont('Arial','',7);
@@ -371,7 +371,7 @@ $rowW = array_sum($widths);
 $rowH = 10;
 $pdf->RoundRect($startX, $startY, $rowW, $rowH, 3, 'DF');
 $pdf->SetXY($startX, $startY);
-$pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],$rowH,'Totals',0,0,'R');
+$pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],$rowH,'Grand Total',0,0,'R');
 $pdf->Cell($widths[4],$rowH,formatIndian($totalUsed),0,0,'R');
 $pdf->Cell($widths[5],$rowH,formatIndian($totalPaid),0,0,'R');
 $pdf->Cell($widths[6],$rowH,formatIndian($netBalance),0,0,'R');
@@ -379,9 +379,11 @@ $pdf->Cell($widths[7],$rowH,'',0,1,'R');
 $pdf->SetDrawColor(0);
 $pdf->SetLineWidth(0.2);
 $posX = $startX;
-foreach ($widths as $w) {
+foreach ($widths as $i => $w) {
     $posX += $w;
-    $pdf->Line($posX, $startY, $posX, $startY+$rowH);
+    if ($i >= 3 && $i < count($widths) - 1) {
+        $pdf->Line($posX, $startY, $posX, $startY+$rowH);
+    }
 }
 
 header('Content-Type: application/pdf');
