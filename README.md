@@ -90,5 +90,5 @@ panel (`Admin panel.html`), styling, PHP endpoints and helper scripts.
 
 ## Credits & License
 
-Developed for **Shree Dhanlaxmi Travels** by Aryan Sharma and contributors.
+Developed for **Shree Dhanlaxmi Travels** by Aryan Sharma.
 All rights reserved.
