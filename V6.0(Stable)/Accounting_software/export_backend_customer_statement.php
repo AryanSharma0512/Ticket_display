@@ -193,9 +193,10 @@ class PDF extends FPDF {
                     }else{
                         $this->SetTextColor(220,0,0);
                     }
+                    // Display the correct relationship between Aryan and the customer
                     $remark = ($netBalance < 0)
-                        ? '('.$accountHolder.' has money deposited with him)'
-                        : '(Aryan owes '.$accountHolder.')';
+                        ? 'ARYAN has money deposited with '.$accountHolder
+                        : 'ARYAN owes money to '.$accountHolder;
                     $this->SetXY($x + $i*$cellW, $y+4);
                     $this->Cell($cellW,5,'Net Balance: '.formatIndian($netBalance),0,2,'C');
                     $this->SetFont('Arial','',7);
@@ -289,7 +290,8 @@ foreach ($transactions as $tx) {
         $label = $currentMonth . ' Totals';
         $pdf->SetFont('Arial','B',9);
         $pdf->SetFillColor(245,245,245);
-        $pdf->SetLineWidth(0.6);
+        // Use the default line width for monthly totals rows
+        $pdf->SetLineWidth(0.2);
         $pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],8,$label,1,0,'R',true);
         $pdf->Cell($widths[4],8,formatIndian($monthlyUsed),1,0,'R',true);
         $pdf->Cell($widths[5],8,formatIndian($monthlyPaid),1,0,'R',true);
@@ -348,7 +350,8 @@ if ($currentMonth !== '') {
     $rowW = array_sum($widths);
     $pdf->SetFont('Arial','B',9);
     $pdf->SetFillColor(245,245,245);
-    $pdf->SetLineWidth(0.6);
+    // Use the default line width for monthly totals rows
+    $pdf->SetLineWidth(0.2);
     $pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],8,$label,1,0,'R',true);
     $pdf->Cell($widths[4],8,formatIndian($monthlyUsed),1,0,'R',true);
     $pdf->Cell($widths[5],8,formatIndian($monthlyPaid),1,0,'R',true);
