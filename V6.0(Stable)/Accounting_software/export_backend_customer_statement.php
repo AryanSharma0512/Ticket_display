@@ -287,19 +287,14 @@ foreach ($transactions as $tx) {
     $txMonth = date('F Y', strtotime($tx['entry_date']));
     if ($currentMonth !== '' && $txMonth !== $currentMonth) {
         $label = $currentMonth . ' Totals';
-        $startX = $pdf->GetX();
-        $startY = $pdf->GetY();
-        $rowW = array_sum($widths);
         $pdf->SetFont('Arial','B',9);
         $pdf->SetFillColor(245,245,245);
-        $pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],8,$label,'LR',0,'R',true);
-        $pdf->Cell($widths[4],8,formatIndian($monthlyUsed),'LR',0,'R',true);
-        $pdf->Cell($widths[5],8,formatIndian($monthlyPaid),'LR',0,'R',true);
-        $pdf->Cell($widths[6],8,formatIndian($monthlyClosing),'LR',0,'R',true);
-        $pdf->Cell($widths[7],8,'','LR',1,'R',true);
         $pdf->SetLineWidth(0.6);
-        $pdf->Line($startX, $startY, $startX+$rowW, $startY);
-        $pdf->Line($startX, $startY+8, $startX+$rowW, $startY+8);
+        $pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],8,$label,1,0,'R',true);
+        $pdf->Cell($widths[4],8,formatIndian($monthlyUsed),1,0,'R',true);
+        $pdf->Cell($widths[5],8,formatIndian($monthlyPaid),1,0,'R',true);
+        $pdf->Cell($widths[6],8,formatIndian($monthlyClosing),1,0,'R',true);
+        $pdf->Cell($widths[7],8,'',1,1,'R',true);
         $pdf->SetLineWidth(0.2);
         $pdf->SetFont('Arial','',9);
         $pdf->SetFillColor(255);
@@ -316,19 +311,34 @@ foreach ($transactions as $tx) {
     $monthlyUsed += $used;
     $monthlyPaid += $paid;
     $monthlyClosing = $balance;
-    $lines = $pdf->calcLines($widths[7], $tx['channel']);
-    $rowH = max(8, $lines * 8);
+    $catLines = $pdf->calcLines($widths[3], $tx['product_category']);
+    $remarkLines = $pdf->calcLines($widths[7], $tx['channel']);
+    $rowH = max(8, $catLines * 8, $remarkLines * 8);
+
     $pdf->Cell($widths[0], $rowH, $index++, 1, 0, 'C');
     $pdf->Cell($widths[1], $rowH, date('d-m-Y', strtotime($tx['entry_date'])), 1, 0, 'C');
     $pdf->Cell($widths[2], $rowH, substr($tx['transaction_id'], -6), 1, 0, 'L');
-    $pdf->Cell($widths[3], $rowH, $tx['product_category'], 1, 0, 'L');
+
+    $catX = $pdf->GetX();
+    $catY = $pdf->GetY();
+    $pdf->MultiCell($widths[3], 8, $tx['product_category'], 0, 'L');
+    $pdf->SetXY($catX + $widths[3], $catY);
+
     $pdf->SetFillColor(255,230,230);
     $pdf->Cell($widths[4], $rowH, formatIndian($used), 1, 0, 'R', true);
     $pdf->SetFillColor(230,255,230);
     $pdf->Cell($widths[5], $rowH, formatIndian($paid), 1, 0, 'R', true);
     $pdf->SetFillColor(255);
     $pdf->Cell($widths[6], $rowH, formatIndian($balance), 1, 0, 'R');
-    $pdf->MultiCell($widths[7], 8, $tx['channel'], 1, 'L');
+
+    $remarkX = $pdf->GetX();
+    $remarkY = $pdf->GetY();
+    $pdf->MultiCell($widths[7], 8, $tx['channel'], 0, 'L');
+    $pdf->SetXY($remarkX + $widths[7], $remarkY);
+
+    $pdf->SetY($catY + $rowH);
+    $pdf->Rect($catX, $catY, $widths[3], $rowH);
+    $pdf->Rect($remarkX, $remarkY, $widths[7], $rowH);
 }
 
 if ($currentMonth !== '') {
@@ -338,26 +348,38 @@ if ($currentMonth !== '') {
     $rowW = array_sum($widths);
     $pdf->SetFont('Arial','B',9);
     $pdf->SetFillColor(245,245,245);
-    $pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],8,$label,'LR',0,'R',true);
-    $pdf->Cell($widths[4],8,formatIndian($monthlyUsed),'LR',0,'R',true);
-    $pdf->Cell($widths[5],8,formatIndian($monthlyPaid),'LR',0,'R',true);
-    $pdf->Cell($widths[6],8,formatIndian($monthlyClosing),'LR',0,'R',true);
-    $pdf->Cell($widths[7],8,'','LR',1,'R',true);
     $pdf->SetLineWidth(0.6);
-    $pdf->Line($startX, $startY, $startX+$rowW, $startY);
-    $pdf->Line($startX, $startY+8, $startX+$rowW, $startY+8);
+    $pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],8,$label,1,0,'R',true);
+    $pdf->Cell($widths[4],8,formatIndian($monthlyUsed),1,0,'R',true);
+    $pdf->Cell($widths[5],8,formatIndian($monthlyPaid),1,0,'R',true);
+    $pdf->Cell($widths[6],8,formatIndian($monthlyClosing),1,0,'R',true);
+    $pdf->Cell($widths[7],8,'',1,1,'R',true);
     $pdf->SetLineWidth(0.2);
     $pdf->SetFont('Arial','',9);
     $pdf->SetFillColor(255);
 }
 
+$pdf->Ln(2);
 $pdf->SetFont('Arial','B',11);
-$pdf->SetFillColor(255,204,0);
-$pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],10,'Totals',1,0,'R',true);
-$pdf->Cell($widths[4],10,formatIndian($totalUsed),1,0,'R',true);
-$pdf->Cell($widths[5],10,formatIndian($totalPaid),1,0,'R',true);
-$pdf->Cell($widths[6],10,formatIndian($netBalance),1,0,'R',true);
-$pdf->Cell($widths[7],10,'',1,1,'R',true);
+$pdf->SetFillColor(255,239,150);
+$startX = $pdf->GetX();
+$startY = $pdf->GetY();
+$rowW = array_sum($widths);
+$rowH = 10;
+$pdf->RoundRect($startX, $startY, $rowW, $rowH, 3, 'DF');
+$pdf->SetXY($startX, $startY);
+$pdf->Cell($widths[0]+$widths[1]+$widths[2]+$widths[3],$rowH,'Totals',0,0,'R');
+$pdf->Cell($widths[4],$rowH,formatIndian($totalUsed),0,0,'R');
+$pdf->Cell($widths[5],$rowH,formatIndian($totalPaid),0,0,'R');
+$pdf->Cell($widths[6],$rowH,formatIndian($netBalance),0,0,'R');
+$pdf->Cell($widths[7],$rowH,'',0,1,'R');
+$pdf->SetDrawColor(0);
+$pdf->SetLineWidth(0.2);
+$posX = $startX;
+foreach ($widths as $w) {
+    $posX += $w;
+    $pdf->Line($posX, $startY, $posX, $startY+$rowH);
+}
 
 header('Content-Type: application/pdf');
 header('Content-Disposition: attachment; filename="Backend_Customer_Statement.pdf"');
