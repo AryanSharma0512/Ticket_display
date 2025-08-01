@@ -114,6 +114,23 @@ body {
     background-color: #e6c200;
 }
 
+/* Styled date inputs for statements */
+.statement-section input[type="date"] {
+    padding: 6px 10px;
+    border: 1px solid #4caf50;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #333;
+    margin: 0 5px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.statement-section input[type="date"]:focus {
+    outline: none;
+    border-color: #45a049;
+    box-shadow: 0 0 5px rgba(69, 160, 73, 0.5);
+}
+
 /* Output area styling */
 .centered {
     font-size: 1rem;
