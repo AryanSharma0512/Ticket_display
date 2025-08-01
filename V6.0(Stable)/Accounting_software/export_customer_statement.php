@@ -129,10 +129,7 @@ class PDF extends FPDF {
     function Footer() {
         $this->SetY(-15);
         $this->SetFont('Arial', 'I', 8);
-        $this->Cell(0, 10,
-            'Page ' . $this->PageNo() . ' | Copyright (c) 2025 Shree Dhanlaxmi Travels. Travel with love and convenience',
-            0, 0, 'C'
-        );
+        $this->Cell(0, 10, 'Page ' . $this->PageNo() . ' | ' . chr(169) . ' Shree Dhanlaxmi Travels 2025. Travel with love and convenience', 0, 0, 'C');
     }
 }
 
