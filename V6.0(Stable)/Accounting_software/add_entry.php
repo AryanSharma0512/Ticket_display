@@ -96,11 +96,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $transactionID = generateTransactionID();
 
-    $sql = "INSERT INTO Main_table (customer_id, customer_name, product, price, quantity, bill_amount, our_cost, profit, margin, channel, amount_received, transaction_id) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO Main_table (customer_id, customer_name, product, price, quantity, our_cost, profit, margin, channel, amount_received, transaction_id) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
     if ($stmt) {
-        $stmt->bind_param("sssiiddissss", $customerId, $customerName, $product, $price, $quantity, $billAmount, $ourCost, $profit, $margin, $channel, $amountReceived, $transactionID);
+        $stmt->bind_param("sssdidddsds", $customerId, $customerName, $product, $price, $quantity, $ourCost, $profit, $margin, $channel, $amountReceived, $transactionID);
         if ($stmt->execute()) {
             echo "New entry created successfully with Transaction ID: " . $transactionID . " and Customer ID: " . $customerId . "\n";
 
