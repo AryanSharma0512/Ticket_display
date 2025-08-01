@@ -1,5 +1,18 @@
 <?php
 require_once 'db_config.php';
+
+// Validate and fetch GET parameters early to avoid undefined notices that can
+// corrupt the PDF output
+if (!isset($_GET['customerID']) || empty($_GET['customerID'])) {
+    echo "Customer ID is required";
+    exit;
+}
+
+$customerID = $_GET['customerID'];
+$fromDate = $_GET['fromDate'] ?? '';
+$toDate = $_GET['toDate'] ?? '';
+$unsettledOnly = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == "1";
+
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
@@ -32,17 +45,6 @@ if ($fromDate === '' || $toDate === '') {
     $conn->close();
     exit;
 }
-
-// Validate GET parameters
-if (!isset($_GET['customerID']) || empty($_GET['customerID'])) {
-    echo "Customer ID is required";
-    exit;
-}
-
-$customerID = $_GET['customerID'];
-$fromDate = $_GET['fromDate'] ?? '';
-$toDate = $_GET['toDate'] ?? '';
-$unsettledOnly = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == "1";
 
 // Fetch customer name
 $sqlCustomer = "SELECT customer_name FROM main_table WHERE customer_id = ? LIMIT 1";
