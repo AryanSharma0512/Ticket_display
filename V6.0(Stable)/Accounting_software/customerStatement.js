@@ -60,7 +60,8 @@ function exportCustomerStatement() {
 
     console.log(`📄 Exporting PDF with: customerID=${customerID}, fromDate=${fromDate}, toDate=${toDate}, unsettledOnly=${unsettledOnly}`);
 
-    window.location.href = `export_customer_statement.php?customerID=${encodeURIComponent(customerID)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&unsettledOnly=${unsettledOnly}`;
+    const url = `export_customer_statement.php?customerID=${encodeURIComponent(customerID)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&unsettledOnly=${unsettledOnly}`;
+    window.open(url, '_blank');
 }
 
 // ✅ Generate the transactions table with proper formatting
