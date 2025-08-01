@@ -33,11 +33,11 @@ try {
 
         echo json_encode([
             'success' => true,
-            'net_collectable' => number_format($net_collectable, 2),
-            'net_amount_received' => number_format($net_amount_received, 2),
-            'total_collection_due' => number_format($total_collection_due, 2),
-            'total_profit' => number_format($total_profit, 2),
-            'net_margin' => number_format($net_margin, 2) // Format net_margin
+            'net_collectable' => round((float)$net_collectable, 2),
+            'net_amount_received' => round((float)$net_amount_received, 2),
+            'total_collection_due' => round((float)$total_collection_due, 2),
+            'total_profit' => round((float)$total_profit, 2),
+            'net_margin' => round((float)$net_margin, 2)
         ]);
     } else {
         throw new Exception("Failed to calculate aggregates: " . $conn->error);
