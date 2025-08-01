@@ -102,11 +102,11 @@ if ($unsettledOnly && !empty($transactions)) {
     }
 }
 
-// 5) Calculate Due Amount dynamically
-$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer 
-           FROM main_table WHERE customer_id = ?";
+// 5) Calculate Due Amount dynamically within the selected range
+$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer
+           FROM main_table WHERE customer_id = ? AND entry_date BETWEEN ? AND ?";
 $stmtDue = $conn->prepare($sqlDue);
-$stmtDue->bind_param("s", $customerID);
+$stmtDue->bind_param("sss", $customerID, $fromDate, $toDate);
 $stmtDue->execute();
 $resultDue = $stmtDue->get_result();
 $dueAmount = 0;

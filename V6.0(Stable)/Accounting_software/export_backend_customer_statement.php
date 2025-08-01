@@ -8,6 +8,7 @@ if (!isset($_GET['accountHolder']) || trim($_GET['accountHolder']) === '') {
 $accountHolder = trim($_GET['accountHolder']);
 $fromDate = $_GET['fromDate'] ?? '';
 $toDate = $_GET['toDate'] ?? '';
+$fromDateInput = $fromDate;
 $unsettledOnly = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == '1';
 
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -100,6 +101,10 @@ if ($unsettledOnly && !empty($transactions)) {
         $openingBalance = 0;
         $netBalance = $totalUsed - $totalPaid;
     }
+}
+
+if ($fromDateInput === '' && !empty($transactions)) {
+    $fromDate = $transactions[0]['entry_date'];
 }
 $fromDateFormatted = date('d-m-Y', strtotime($fromDate));
 $toDateFormatted = date('d-m-Y', strtotime($toDate));
