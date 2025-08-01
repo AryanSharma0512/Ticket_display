@@ -1,18 +1,49 @@
 <?php
-require_once 'db_config.php';
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
+require_once __DIR__ . '/db_config.php';
 
-// Validate GET parameters
-if (!isset($_GET['customerID']) || empty($_GET['customerID'])) {
-    echo "Customer ID is required";
+if (!isset($_GET['customerID']) || trim($_GET['customerID']) === '') {
+    echo 'Customer ID is required';
     exit;
 }
 
-$customerID = $_GET['customerID'];
-$unsettledOnly = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == "1";
+$customerID = trim($_GET['customerID']);
+$fromDate = $_GET['fromDate'] ?? '';
+$toDate = $_GET['toDate'] ?? '';
+$unsettledOnly = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == '1';
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die('Connection failed: ' . $conn->connect_error);
+}
+
+if ($fromDate === '') {
+    $stmt = $conn->prepare("SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date ASC LIMIT 1");
+    $stmt->bind_param('s', $customerID);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $fromDate = $row['entry_date'];
+    }
+    $stmt->close();
+}
+
+if ($toDate === '') {
+    $stmt = $conn->prepare("SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date DESC LIMIT 1");
+    $stmt->bind_param('s', $customerID);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $toDate = $row['entry_date'];
+    }
+    $stmt->close();
+}
+
+if ($fromDate === '' || $toDate === '') {
+    die('No transactions found for this customer');
+}
+
+$fromDateFormatted = date('d-m-Y', strtotime($fromDate));
+$toDateFormatted = date('d-m-Y', strtotime($toDate));
 
 // Fetch customer name
 $sqlCustomer = "SELECT customer_name FROM main_table WHERE customer_id = ? LIMIT 1";
@@ -29,10 +60,10 @@ $stmtCustomer->close();
 
 // Fetch transactions
 $sql = "SELECT transaction_id, product, price, quantity, bill_amount, amount_received, entry_date
-        FROM main_table WHERE customer_id = ? ORDER BY entry_date ASC";
+        FROM main_table WHERE customer_id = ? AND entry_date BETWEEN ? AND ? ORDER BY entry_date ASC";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $customerID);
+$stmt->bind_param("sss", $customerID, $fromDate, $toDate);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -65,11 +96,11 @@ if ($unsettledOnly && !empty($transactions)) {
     }
 }
 
-// Calculate Due Amount Dynamically
-$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer 
-           FROM main_table WHERE customer_id = ?";
+// Calculate Due Amount Dynamically within the selected range
+$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer
+           FROM main_table WHERE customer_id = ? AND entry_date BETWEEN ? AND ?";
 $stmtDue = $conn->prepare($sqlDue);
-$stmtDue->bind_param("s", $customerID);
+$stmtDue->bind_param("sss", $customerID, $fromDate, $toDate);
 $stmtDue->execute();
 $resultDue = $stmtDue->get_result();
 $dueAmount = 0;
@@ -84,18 +115,24 @@ require('fpdf/fpdf.php');
 
 class PDF extends FPDF {
     function Header() {
-        global $customerName, $customerID;
+        global $customerName, $customerID, $fromDateFormatted, $toDateFormatted;
         $this->SetFont('Arial', 'B', 14);
         $this->SetFillColor(50, 50, 50);
         $this->SetTextColor(255, 255, 255);
         $this->Cell(275, 12, "Customer Statement - $customerName (ID: $customerID)", 0, 1, 'C', true);
-        $this->Ln(8);
+        $this->Ln(6);
+        $this->SetFont('Arial','',11);
+        $this->Cell(275, 8, "From: $fromDateFormatted To: $toDateFormatted", 0, 1, 'C', true);
+        $this->Ln(2);
     }
 
     function Footer() {
         $this->SetY(-15);
         $this->SetFont('Arial', 'I', 8);
-        $this->Cell(0, 10, 'Page ' . $this->PageNo() . ' | ' . utf8_decode('© Shree Dhanlaxmi Travels 2025. Travel with love and convenience'), 0, 0, 'C');
+        $this->Cell(0, 10,
+            'Page ' . $this->PageNo() . ' | Copyright (c) 2025 Shree Dhanlaxmi Travels. Travel with love and convenience',
+            0, 0, 'C'
+        );
     }
 }
 
@@ -142,13 +179,11 @@ $pdf->SetFillColor(255, 204, 0);
 $pdf->Cell(array_sum($widths) - $widths[7], 10, "Due from Customer:", 1, 0, 'R', true);
 $pdf->Cell($widths[7], 10, number_format($dueAmount, 2) . " INR", 1, 1, 'C', true);
 
-// Force download the PDF
-header('Content-Type: application/pdf');
-header('Content-Disposition: attachment; filename="Customer_Statement.pdf"');
-header('Cache-Control: no-cache, no-store, must-revalidate');
-header('Pragma: no-cache');
-header('Expires: 0');
+// --- PDF output ---
+$logFile = __DIR__ . '/customer_statement.log';
+file_put_contents($logFile, "\n---\n" . date('c') . " Export for $customerID from $fromDate to $toDate (unsettledOnly=$unsettledOnly)", FILE_APPEND);
 
-$pdf->Output("D", "Customer_Statement.pdf");
+header('Content-Type: application/pdf');
+$pdf->Output('I', 'Customer_Statement.pdf');
+file_put_contents($logFile, " Generated PDF with " . count($transactions) . " transactions\n", FILE_APPEND);
 $conn->close();
-?>

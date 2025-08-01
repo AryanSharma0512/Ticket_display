@@ -9,6 +9,8 @@ function updateUnsettledValue() {
 // ✅ Function to fetch customer statement correctly
 function fetchCustomerStatement() {
     const customerID = document.getElementById('customerID').value;
+    const fromDate = document.getElementById('customerFromDate').value;
+    const toDate = document.getElementById('customerToDate').value;
     const unsettledOnly = document.getElementById('unsettledOnlyHidden').value; // ✅ Correct value
 
     if (!customerID) {
@@ -16,14 +18,14 @@ function fetchCustomerStatement() {
         return;
     }
 
-    console.log(`✅ Fetching with: customerID=${customerID}, unsettledOnly=${unsettledOnly}`);
+    console.log(`✅ Fetching with: customerID=${customerID}, fromDate=${fromDate}, toDate=${toDate}, unsettledOnly=${unsettledOnly}`);
 
     fetch('fetch_customer_statement.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `customerID=${encodeURIComponent(customerID)}&unsettledOnly=${unsettledOnly}`
+        body: `customerID=${encodeURIComponent(customerID)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&unsettledOnly=${unsettledOnly}`
     })
     .then(response => response.json())
     .then(data => {
@@ -47,6 +49,8 @@ function fetchCustomerStatement() {
 // ✅ Function to export customer statement as PDF
 function exportCustomerStatement() {
     const customerID = document.getElementById('customerID').value;
+    const fromDate = document.getElementById('customerFromDate').value;
+    const toDate = document.getElementById('customerToDate').value;
     const unsettledOnly = document.getElementById('unsettledOnlyHidden').value; // ✅ Use hidden field
 
     if (!customerID) {
@@ -54,9 +58,9 @@ function exportCustomerStatement() {
         return;
     }
 
-    console.log(`📄 Exporting PDF with: customerID=${customerID}, unsettledOnly=${unsettledOnly}`);
+    console.log(`📄 Exporting PDF with: customerID=${customerID}, fromDate=${fromDate}, toDate=${toDate}, unsettledOnly=${unsettledOnly}`);
 
-    window.location.href = `export_customer_statement.php?customerID=${encodeURIComponent(customerID)}&unsettledOnly=${unsettledOnly}`;
+    window.open(`export_customer_statement.php?customerID=${encodeURIComponent(customerID)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&unsettledOnly=${unsettledOnly}`, '_blank');
 }
 
 // ✅ Generate the transactions table with proper formatting
