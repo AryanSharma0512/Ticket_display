@@ -1,50 +1,18 @@
 <?php
 require_once 'db_config.php';
-
-// Validate GET parameters first to avoid notices that corrupt PDF output
-if (!isset($_GET['customerID']) || trim($_GET['customerID']) === '') {
-    echo 'Customer ID is required';
-    exit;
-}
-
-$customerID    = trim($_GET['customerID']);
-$fromDate       = $_GET['fromDate'] ?? '';
-$toDate         = $_GET['toDate'] ?? '';
-$unsettledOnly  = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == '1';
-
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
-    die('Connection failed: ' . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
 }
 
-// Determine default date range if not supplied
-if ($fromDate === '') {
-    $stmt = $conn->prepare('SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date ASC LIMIT 1');
-    $stmt->bind_param('s', $customerID);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($row = $res->fetch_assoc()) {
-        $fromDate = $row['entry_date'];
-    }
-    $stmt->close();
-}
-
-if ($toDate === '') {
-    $stmt = $conn->prepare('SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date DESC LIMIT 1');
-    $stmt->bind_param('s', $customerID);
-    $stmt->execute();
-    $res = $stmt->get_result();
-    if ($row = $res->fetch_assoc()) {
-        $toDate = $row['entry_date'];
-    }
-    $stmt->close();
-}
-
-if ($fromDate === '' || $toDate === '') {
-    echo 'No transactions found for this customer';
-    $conn->close();
+// Validate GET parameters
+if (!isset($_GET['customerID']) || empty($_GET['customerID'])) {
+    echo "Customer ID is required";
     exit;
 }
+
+$customerID = $_GET['customerID'];
+$unsettledOnly = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == "1";
 
 // Fetch customer name
 $sqlCustomer = "SELECT customer_name FROM main_table WHERE customer_id = ? LIMIT 1";
@@ -60,12 +28,11 @@ if ($row = $resultCustomer->fetch_assoc()) {
 $stmtCustomer->close();
 
 // Fetch transactions
-
 $sql = "SELECT transaction_id, product, price, quantity, bill_amount, amount_received, entry_date
-        FROM main_table WHERE customer_id = ? AND entry_date BETWEEN ? AND ? ORDER BY entry_date ASC";
+        FROM main_table WHERE customer_id = ? ORDER BY entry_date ASC";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("sss", $customerID, $fromDate, $toDate);
+$stmt->bind_param("s", $customerID);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -99,10 +66,10 @@ if ($unsettledOnly && !empty($transactions)) {
 }
 
 // Calculate Due Amount Dynamically
-$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer
-           FROM main_table WHERE customer_id = ? AND entry_date BETWEEN ? AND ?";
+$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer 
+           FROM main_table WHERE customer_id = ?";
 $stmtDue = $conn->prepare($sqlDue);
-$stmtDue->bind_param("sss", $customerID, $fromDate, $toDate);
+$stmtDue->bind_param("s", $customerID);
 $stmtDue->execute();
 $resultDue = $stmtDue->get_result();
 $dueAmount = 0;
@@ -184,4 +151,4 @@ header('Expires: 0');
 
 $pdf->Output("D", "Customer_Statement.pdf");
 $conn->close();
-exit;
+?>
