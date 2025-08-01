@@ -25,14 +25,40 @@ $monthlyData = [];
 if ($result && $result->num_rows > 0) {
     while ($row = $result->fetch_assoc()){
         $monthlyData[] = [
-            "month" => $row["month"],
-            "total_sales" => (float)$row["total_sales"],
-            "total_profit" => (float)$row["total_profit"]
+            'month' => $row['month'],
+            'total_sales' => (float)$row['total_sales'],
+            'total_profit' => (float)$row['total_profit']
         ];
     }
-    echo json_encode($monthlyData);
-} else {
-    echo json_encode(["error" => "Query failed: " . $conn->error]);
+}
+
+// Guarantee current month entry exists even with no transactions
+date_default_timezone_set('Asia/Kolkata');
+$currentMonth = date('Y-m');
+$foundCurrent = false;
+foreach ($monthlyData as $entry) {
+    if ($entry['month'] === $currentMonth) {
+        $foundCurrent = true;
+        break;
+    }
+}
+if (!$foundCurrent) {
+    $monthlyData[] = [
+        'month' => $currentMonth,
+        'total_sales' => 0,
+        'total_profit' => 0
+    ];
+}
+
+// Sort in ascending order in case we appended the current month
+usort($monthlyData, function($a, $b){
+    return strcmp($a['month'], $b['month']);
+});
+
+echo json_encode($monthlyData);
+if (!$result) {
+    // In case of query failure, still output an error
+    error_log('Query failed: ' . $conn->error);
 }
 $conn->close();
 ?>

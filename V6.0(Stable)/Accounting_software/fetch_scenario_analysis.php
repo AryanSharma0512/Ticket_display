@@ -85,9 +85,31 @@ foreach ($monthData as $mKey => $dataArr) {
     ];
 }
 
+// Make sure the current month is represented even if there are no entries yet
+date_default_timezone_set('Asia/Kolkata');
+$currentMonth = date('Y-m');
+$hasCurrent = false;
+foreach ($finalData as $row) {
+    if ($row['month'] === $currentMonth) {
+        $hasCurrent = true;
+        break;
+    }
+}
+if (!$hasCurrent) {
+    $finalData[] = [
+        'month'          => $currentMonth,
+        'actual_revenue' => 0,
+        'actual_profit'  => 0,
+        'min_revenue'    => 0,
+        'max_revenue'    => 0,
+        'median_revenue' => 0,
+        'avg_revenue'    => 0
+    ];
+}
+
 // Sort final data by month ascending
 usort($finalData, function($a, $b){
-    return strcmp($a["month"], $b["month"]);
+    return strcmp($a['month'], $b['month']);
 });
 
 echo json_encode($finalData);

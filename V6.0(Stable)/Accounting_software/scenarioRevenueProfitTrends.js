@@ -68,9 +68,20 @@ document.addEventListener("DOMContentLoaded", function() {
                 const profits = data.map(item => parseFloat(item.actual_profit));
                 const margins = profits.map((p, i) => (revenues[i] > 0 ? (p / revenues[i]) * 100 : 0));
 
+                // Ensure the current month exists even if no transactions yet
+                const now = new Date();
+                const offset = now.getTimezoneOffset() * 60000;
+                const currentMonthLabel = new Date(now - offset).toISOString().slice(0, 7);
+                if (!labels.includes(currentMonthLabel)) {
+                    labels.push(currentMonthLabel);
+                    revenues.push(0);
+                    profits.push(0);
+                    margins.push(0);
+                }
+
                 // Identify current month index.
-                const currentIndex = labels.length - 1;
-                const currentData = data[currentIndex];
+                const currentIndex = labels.indexOf(currentMonthLabel);
+                const currentData = data.find(d => d.month === currentMonthLabel) || {actual_revenue: 0, actual_profit: 0};
                 const actualRevenueCurrent = parseFloat(currentData.actual_revenue);
                 const actualProfitCurrent = parseFloat(currentData.actual_profit);
                 const actualMarginCurrent = (actualRevenueCurrent > 0)
@@ -180,11 +191,12 @@ document.addEventListener("DOMContentLoaded", function() {
                 };
 
                 // Draw dotted line from last month's margin to current month's projection.
+                const prevIndex = currentIndex > 0 ? currentIndex - 1 : 0;
                 const marginConnectionLine = {
                     type: "line",
                     label: "Margin Projection",
                     data: [
-                        { x: labels[labels.length - 2], y: margins[labels.length - 2] },
+                        { x: labels[prevIndex], y: margins[prevIndex] },
                         { x: labels[currentIndex], y: blendedMargin }
                     ],
                     borderColor: "rgba(0,0,0,0.7)",
