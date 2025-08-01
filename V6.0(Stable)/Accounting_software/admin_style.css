@@ -96,6 +96,22 @@ body {
     border-radius: 8px;
 }
 
+/* Uniform styling for date input fields */
+input[type="date"] {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #333;
+    font-size: 1rem;
+}
+
+input[type="date"]:focus {
+    outline: none;
+    border-color: #4caf50;
+    box-shadow: 0 0 5px rgba(76, 175, 80, 0.5);
+}
+
 /* Row layout for Generate/Export buttons */
 .button-row {
     display: flex;

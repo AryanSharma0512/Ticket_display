@@ -184,4 +184,3 @@ header('Expires: 0');
 
 $pdf->Output("D", "Customer_Statement.pdf");
 $conn->close();
-?>
