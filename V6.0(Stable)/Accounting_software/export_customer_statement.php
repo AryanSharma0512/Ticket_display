@@ -1,12 +1,25 @@
 <?php
 require_once 'db_config.php';
-$conn = new mysqli($servername, $username, $password, $dbname);
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+
+// Validate GET parameters first to avoid notices that corrupt PDF output
+if (!isset($_GET['customerID']) || trim($_GET['customerID']) === '') {
+    echo 'Customer ID is required';
+    exit;
 }
 
+$customerID    = trim($_GET['customerID']);
+$fromDate       = $_GET['fromDate'] ?? '';
+$toDate         = $_GET['toDate'] ?? '';
+$unsettledOnly  = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == '1';
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+    die('Connection failed: ' . $conn->connect_error);
+}
+
+// Determine default date range if not supplied
 if ($fromDate === '') {
-    $stmt = $conn->prepare("SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date ASC LIMIT 1");
+    $stmt = $conn->prepare('SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date ASC LIMIT 1');
     $stmt->bind_param('s', $customerID);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -17,7 +30,7 @@ if ($fromDate === '') {
 }
 
 if ($toDate === '') {
-    $stmt = $conn->prepare("SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date DESC LIMIT 1");
+    $stmt = $conn->prepare('SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date DESC LIMIT 1');
     $stmt->bind_param('s', $customerID);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -32,17 +45,6 @@ if ($fromDate === '' || $toDate === '') {
     $conn->close();
     exit;
 }
-
-// Validate GET parameters
-if (!isset($_GET['customerID']) || empty($_GET['customerID'])) {
-    echo "Customer ID is required";
-    exit;
-}
-
-$customerID = $_GET['customerID'];
-$fromDate = $_GET['fromDate'] ?? '';
-$toDate = $_GET['toDate'] ?? '';
-$unsettledOnly = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == "1";
 
 // Fetch customer name
 $sqlCustomer = "SELECT customer_name FROM main_table WHERE customer_id = ? LIMIT 1";
