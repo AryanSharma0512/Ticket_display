@@ -9,6 +9,7 @@ if (!isset($_GET['customerID']) || trim($_GET['customerID']) === '') {
 $customerID = trim($_GET['customerID']);
 $fromDate = $_GET['fromDate'] ?? '';
 $toDate = $_GET['toDate'] ?? '';
+$fromDateInput = $fromDate;
 $unsettledOnly = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == '1';
 
 $conn = new mysqli($servername, $username, $password, $dbname);
@@ -96,6 +97,11 @@ if ($unsettledOnly && !empty($transactions)) {
     }
 }
 
+if ($fromDateInput === '' && !empty($transactions)) {
+    $fromDate = $transactions[0]['entry_date'];
+    $fromDateFormatted = date('d-m-Y', strtotime($fromDate));
+}
+
 // Calculate Due Amount Dynamically within the selected range
 $sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer
            FROM main_table WHERE customer_id = ? AND entry_date BETWEEN ? AND ?";
@@ -177,10 +183,6 @@ $pdf->Cell(array_sum($widths) - $widths[7], 10, "Due from Customer:", 1, 0, 'R',
 $pdf->Cell($widths[7], 10, number_format($dueAmount, 2) . " INR", 1, 1, 'C', true);
 
 // --- PDF output ---
-$logFile = __DIR__ . '/customer_statement.log';
-file_put_contents($logFile, "\n---\n" . date('c') . " Export for $customerID from $fromDate to $toDate (unsettledOnly=$unsettledOnly)", FILE_APPEND);
-
 header('Content-Type: application/pdf');
 $pdf->Output('I', 'Customer_Statement.pdf');
-file_put_contents($logFile, " Generated PDF with " . count($transactions) . " transactions\n", FILE_APPEND);
 $conn->close();

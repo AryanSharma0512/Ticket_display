@@ -7,60 +7,110 @@ function updateUnsettledValue() {
 }
 
 // ✅ Function to fetch customer statement correctly
+function resolveCustomerInput(input) {
+    return fetch('resolve_customer.php?input=' + encodeURIComponent(input))
+        .then(resp => resp.json());
+}
+
 function fetchCustomerStatement() {
-    const customerID = document.getElementById('customerID').value;
+    const rawInput = document.getElementById('customerID').value.trim();
     const fromDate = document.getElementById('customerFromDate').value;
     const toDate = document.getElementById('customerToDate').value;
     const unsettledOnly = document.getElementById('unsettledOnlyHidden').value; // ✅ Correct value
 
-    if (!customerID) {
-        alert("❌ Please enter a Customer ID before generating the statement.");
+    if (!rawInput) {
+        alert("❌ Please enter a Customer ID or Name before generating the statement.");
         return;
     }
 
-    console.log(`✅ Fetching with: customerID=${customerID}, fromDate=${fromDate}, toDate=${toDate}, unsettledOnly=${unsettledOnly}`);
-
-    fetch('fetch_customer_statement.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: `customerID=${encodeURIComponent(customerID)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&unsettledOnly=${unsettledOnly}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.error) {
-            document.getElementById('outputContainer').innerHTML = `<p>Error: ${data.error}</p>`;
+    resolveCustomerInput(rawInput).then(res => {
+        if (res.status === 'none') {
+            alert('No matching customer found.');
             return;
         }
 
-        // ✅ Generate the table with transaction data
-        let resultsHTML = `<div class='transaction-table-container'>` + 
-            generateTable(data, "transaction-table", "Customer Statement") + `</div>`;
-        document.getElementById('outputContainer').innerHTML = resultsHTML;
+        let customerID;
+        if (res.status === 'ambiguous') {
+            const choice = prompt('Multiple matches found for your input. Please clarify whether this is a Customer ID or Customer Name.', 'ID or Name');
+            if (!choice) return;
+            if (choice.toLowerCase().startsWith('id')) {
+                customerID = res.idMatch;
+            } else if (choice.toLowerCase().startsWith('name')) {
+                customerID = res.nameMatch;
+            } else {
+                alert('Invalid choice.');
+                return;
+            }
+        } else {
+            customerID = res.customerID;
+        }
 
-        document.getElementById('exportPdfCustomer').style.display = "block";
-    })
-    .catch(error => {
-        document.getElementById('outputContainer').innerHTML = `<p>Error fetching customer statement: ${error.message}</p>`;
+        console.log(`✅ Fetching with: customerID=${customerID}, fromDate=${fromDate}, toDate=${toDate}, unsettledOnly=${unsettledOnly}`);
+
+        fetch('fetch_customer_statement.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `customerID=${encodeURIComponent(customerID)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&unsettledOnly=${unsettledOnly}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('outputContainer').innerHTML = `<p>Error: ${data.error}</p>`;
+                return;
+            }
+
+            // ✅ Generate the table with transaction data
+            let resultsHTML = `<div class='transaction-table-container'>` +
+                generateTable(data, "transaction-table", "Customer Statement") + `</div>`;
+            document.getElementById('outputContainer').innerHTML = resultsHTML;
+
+            document.getElementById('exportPdfCustomer').style.display = "block";
+        })
+        .catch(error => {
+            document.getElementById('outputContainer').innerHTML = `<p>Error fetching customer statement: ${error.message}</p>`;
+        });
     });
 }
 
 // ✅ Function to export customer statement as PDF
 function exportCustomerStatement() {
-    const customerID = document.getElementById('customerID').value;
+    const rawInput = document.getElementById('customerID').value.trim();
     const fromDate = document.getElementById('customerFromDate').value;
     const toDate = document.getElementById('customerToDate').value;
     const unsettledOnly = document.getElementById('unsettledOnlyHidden').value; // ✅ Use hidden field
 
-    if (!customerID) {
-        alert("❌ Please enter a Customer ID before exporting.");
+    if (!rawInput) {
+        alert("❌ Please enter a Customer ID or Name before exporting.");
         return;
     }
 
-    console.log(`📄 Exporting PDF with: customerID=${customerID}, fromDate=${fromDate}, toDate=${toDate}, unsettledOnly=${unsettledOnly}`);
+    resolveCustomerInput(rawInput).then(res => {
+        if (res.status === 'none') {
+            alert('No matching customer found.');
+            return;
+        }
 
-    window.open(`export_customer_statement.php?customerID=${encodeURIComponent(customerID)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&unsettledOnly=${unsettledOnly}`, '_blank');
+        let customerID;
+        if (res.status === 'ambiguous') {
+            const choice = prompt('Multiple matches found for your input. Please clarify whether this is a Customer ID or Customer Name.', 'ID or Name');
+            if (!choice) return;
+            if (choice.toLowerCase().startsWith('id')) {
+                customerID = res.idMatch;
+            } else if (choice.toLowerCase().startsWith('name')) {
+                customerID = res.nameMatch;
+            } else {
+                alert('Invalid choice.');
+                return;
+            }
+        } else {
+            customerID = res.customerID;
+        }
+
+        console.log(`📄 Exporting PDF with: customerID=${customerID}, fromDate=${fromDate}, toDate=${toDate}, unsettledOnly=${unsettledOnly}`);
+        window.open(`export_customer_statement.php?customerID=${encodeURIComponent(customerID)}&fromDate=${encodeURIComponent(fromDate)}&toDate=${encodeURIComponent(toDate)}&unsettledOnly=${unsettledOnly}`, '_blank');
+    });
 }
 
 // ✅ Generate the transactions table with proper formatting
