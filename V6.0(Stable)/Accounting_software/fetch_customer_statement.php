@@ -9,6 +9,8 @@ if (!isset($_POST['customerID']) || empty($_POST['customerID'])) {
 }
 
 $customerID = $_POST['customerID'];
+$fromDate = $_POST['fromDate'] ?? '';
+$toDate = $_POST['toDate'] ?? '';
 $unsettledOnly = isset($_POST['unsettledOnly']) && $_POST['unsettledOnly'] == 1;
 
 // 2) Database connection
@@ -16,6 +18,34 @@ require_once 'db_config.php';
 $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     echo json_encode(['error' => 'Database connection failed']);
+    exit;
+}
+
+if ($fromDate === '') {
+    $stmt = $conn->prepare("SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date ASC LIMIT 1");
+    $stmt->bind_param('s', $customerID);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $fromDate = $row['entry_date'];
+    }
+    $stmt->close();
+}
+
+if ($toDate === '') {
+    $stmt = $conn->prepare("SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date DESC LIMIT 1");
+    $stmt->bind_param('s', $customerID);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $toDate = $row['entry_date'];
+    }
+    $stmt->close();
+}
+
+if ($fromDate === '' || $toDate === '') {
+    echo json_encode(['error' => 'No transactions found for this customer']);
+    $conn->close();
     exit;
 }
 
@@ -28,8 +58,8 @@ $sql = "SELECT
             bill_amount, 
             amount_received, 
             entry_date
-        FROM main_table 
-        WHERE customer_id = ? 
+        FROM main_table
+        WHERE customer_id = ? AND entry_date BETWEEN ? AND ?
         ORDER BY entry_date ASC";
 
 $stmt = $conn->prepare($sql);
@@ -38,7 +68,7 @@ if (!$stmt) {
     exit;
 }
 
-$stmt->bind_param("s", $customerID);
+$stmt->bind_param("sss", $customerID, $fromDate, $toDate);
 if (!$stmt->execute()) {
     echo json_encode(['error' => 'Database query execution failed']);
     exit;
@@ -72,10 +102,10 @@ if ($unsettledOnly && !empty($transactions)) {
 }
 
 // 5) Calculate Due Amount dynamically
-$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer 
-           FROM main_table WHERE customer_id = ?";
+$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer
+           FROM main_table WHERE customer_id = ? AND entry_date BETWEEN ? AND ?";
 $stmtDue = $conn->prepare($sqlDue);
-$stmtDue->bind_param("s", $customerID);
+$stmtDue->bind_param("sss", $customerID, $fromDate, $toDate);
 $stmtDue->execute();
 $resultDue = $stmtDue->get_result();
 $dueAmount = 0;
