@@ -5,6 +5,34 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+if ($fromDate === '') {
+    $stmt = $conn->prepare("SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date ASC LIMIT 1");
+    $stmt->bind_param('s', $customerID);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $fromDate = $row['entry_date'];
+    }
+    $stmt->close();
+}
+
+if ($toDate === '') {
+    $stmt = $conn->prepare("SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date DESC LIMIT 1");
+    $stmt->bind_param('s', $customerID);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $toDate = $row['entry_date'];
+    }
+    $stmt->close();
+}
+
+if ($fromDate === '' || $toDate === '') {
+    echo 'No transactions found for this customer';
+    $conn->close();
+    exit;
+}
+
 // Validate GET parameters
 if (!isset($_GET['customerID']) || empty($_GET['customerID'])) {
     echo "Customer ID is required";
@@ -12,6 +40,8 @@ if (!isset($_GET['customerID']) || empty($_GET['customerID'])) {
 }
 
 $customerID = $_GET['customerID'];
+$fromDate = $_GET['fromDate'] ?? '';
+$toDate = $_GET['toDate'] ?? '';
 $unsettledOnly = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == "1";
 
 // Fetch customer name
@@ -28,11 +58,12 @@ if ($row = $resultCustomer->fetch_assoc()) {
 $stmtCustomer->close();
 
 // Fetch transactions
+
 $sql = "SELECT transaction_id, product, price, quantity, bill_amount, amount_received, entry_date
-        FROM main_table WHERE customer_id = ? ORDER BY entry_date ASC";
+        FROM main_table WHERE customer_id = ? AND entry_date BETWEEN ? AND ? ORDER BY entry_date ASC";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $customerID);
+$stmt->bind_param("sss", $customerID, $fromDate, $toDate);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -66,10 +97,10 @@ if ($unsettledOnly && !empty($transactions)) {
 }
 
 // Calculate Due Amount Dynamically
-$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer 
-           FROM main_table WHERE customer_id = ?";
+$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer
+           FROM main_table WHERE customer_id = ? AND entry_date BETWEEN ? AND ?";
 $stmtDue = $conn->prepare($sqlDue);
-$stmtDue->bind_param("s", $customerID);
+$stmtDue->bind_param("sss", $customerID, $fromDate, $toDate);
 $stmtDue->execute();
 $resultDue = $stmtDue->get_result();
 $dueAmount = 0;
