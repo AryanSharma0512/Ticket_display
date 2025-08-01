@@ -69,6 +69,11 @@
   <div id="customerStatementContainer" class="statement-section" style="display: none;">
     <label for="customerID">Enter Customer ID:</label>
     <input type="text" id="customerID" name="customerID" required>
+    <br>
+    <label for="fromDate">From Date:</label>
+    <input type="date" id="fromDate" name="fromDate">
+    <label for="toDate">To Date:</label>
+    <input type="date" id="toDate" name="toDate">
     <div>
       <input type="hidden" id="unsettledOnlyHidden" name="unsettledOnly" value="0">
       <input type="checkbox" id="unsettledOnly" name="unsettledOnly" onchange="updateUnsettledValue()">

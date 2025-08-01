@@ -12,7 +12,36 @@ if (!isset($_GET['customerID']) || empty($_GET['customerID'])) {
 }
 
 $customerID = $_GET['customerID'];
+$fromDate = $_GET['fromDate'] ?? '';
+$toDate = $_GET['toDate'] ?? '';
 $unsettledOnly = isset($_GET['unsettledOnly']) && $_GET['unsettledOnly'] == "1";
+
+// Determine date range if not provided
+if ($fromDate === '') {
+    $stmt = $conn->prepare("SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date ASC LIMIT 1");
+    $stmt->bind_param('s', $customerID);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $fromDate = $row['entry_date'];
+    }
+    $stmt->close();
+}
+
+if ($toDate === '') {
+    $stmt = $conn->prepare("SELECT entry_date FROM main_table WHERE customer_id = ? ORDER BY entry_date DESC LIMIT 1");
+    $stmt->bind_param('s', $customerID);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($row = $res->fetch_assoc()) {
+        $toDate = $row['entry_date'];
+    }
+    $stmt->close();
+}
+
+if ($fromDate === '' || $toDate === '') {
+    die('No transactions found for this customer');
+}
 
 // Fetch customer name
 $sqlCustomer = "SELECT customer_name FROM main_table WHERE customer_id = ? LIMIT 1";
@@ -29,10 +58,10 @@ $stmtCustomer->close();
 
 // Fetch transactions
 $sql = "SELECT transaction_id, product, price, quantity, bill_amount, amount_received, entry_date
-        FROM main_table WHERE customer_id = ? ORDER BY entry_date ASC";
+        FROM main_table WHERE customer_id = ? AND entry_date BETWEEN ? AND ? ORDER BY entry_date ASC";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $customerID);
+$stmt->bind_param("sss", $customerID, $fromDate, $toDate);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -66,10 +95,10 @@ if ($unsettledOnly && !empty($transactions)) {
 }
 
 // Calculate Due Amount Dynamically
-$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer 
-           FROM main_table WHERE customer_id = ?";
+$sqlDue = "SELECT SUM(bill_amount) - SUM(amount_received) AS due_from_customer
+           FROM main_table WHERE customer_id = ? AND entry_date BETWEEN ? AND ?";
 $stmtDue = $conn->prepare($sqlDue);
-$stmtDue->bind_param("s", $customerID);
+$stmtDue->bind_param("sss", $customerID, $fromDate, $toDate);
 $stmtDue->execute();
 $resultDue = $stmtDue->get_result();
 $dueAmount = 0;
@@ -84,12 +113,15 @@ require('fpdf/fpdf.php');
 
 class PDF extends FPDF {
     function Header() {
-        global $customerName, $customerID;
+        global $customerName, $customerID, $fromDateFormatted, $toDateFormatted;
         $this->SetFont('Arial', 'B', 14);
         $this->SetFillColor(50, 50, 50);
         $this->SetTextColor(255, 255, 255);
         $this->Cell(275, 12, "Customer Statement - $customerName (ID: $customerID)", 0, 1, 'C', true);
-        $this->Ln(8);
+        $this->SetFont('Arial', '', 10);
+        $this->SetTextColor(0,0,0);
+        $this->Cell(275, 8, "From: $fromDateFormatted To: $toDateFormatted", 0, 1, 'C');
+        $this->Ln(4);
     }
 
     function Footer() {
@@ -98,6 +130,9 @@ class PDF extends FPDF {
         $this->Cell(0, 10, 'Page ' . $this->PageNo() . ' | ' . utf8_decode('© Shree Dhanlaxmi Travels 2025. Travel with love and convenience'), 0, 0, 'C');
     }
 }
+
+$fromDateFormatted = date('d-m-Y', strtotime($fromDate));
+$toDateFormatted = date('d-m-Y', strtotime($toDate));
 
 $pdf = new PDF();
 $pdf->AliasNbPages();
