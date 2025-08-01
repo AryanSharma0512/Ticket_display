@@ -86,7 +86,8 @@ foreach ($monthData as $mKey => $dataArr) {
 }
 
 // Make sure the current month is represented even if there are no entries yet
-date_default_timezone_set('Asia/Kolkata');
+// Use the server's timezone dynamically instead of a fixed location
+date_default_timezone_set(date_default_timezone_get());
 $currentMonth = date('Y-m');
 $hasCurrent = false;
 foreach ($finalData as $row) {

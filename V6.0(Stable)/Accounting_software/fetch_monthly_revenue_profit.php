@@ -33,7 +33,8 @@ if ($result && $result->num_rows > 0) {
 }
 
 // Guarantee current month entry exists even with no transactions
-date_default_timezone_set('Asia/Kolkata');
+// Use the system's configured timezone so the month aligns with the server
+date_default_timezone_set(date_default_timezone_get());
 $currentMonth = date('Y-m');
 $foundCurrent = false;
 foreach ($monthlyData as $entry) {
