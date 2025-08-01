@@ -124,4 +124,3 @@ if (empty($transactions)) {
 } else {
     echo json_encode(['transactions' => $transactions, 'due_from_customer' => $dueAmount]);
 }
-?>

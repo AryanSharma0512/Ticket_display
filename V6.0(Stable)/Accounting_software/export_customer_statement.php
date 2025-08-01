@@ -179,10 +179,5 @@ $pdf->Cell($widths[7], 10, number_format($dueAmount, 2) . " INR", 1, 1, 'C', tru
 // Force download the PDF
 header('Content-Type: application/pdf');
 header('Content-Disposition: attachment; filename="Customer_Statement.pdf"');
-header('Cache-Control: no-cache, no-store, must-revalidate');
-header('Pragma: no-cache');
-header('Expires: 0');
-
-$pdf->Output("D", "Customer_Statement.pdf");
+$pdf->Output('D', 'Customer_Statement.pdf');
 $conn->close();
-?>
